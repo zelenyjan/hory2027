@@ -1,8 +1,9 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@shared/types';
 import { MESSAGE_MAX } from '@shared/schemas';
 import { api } from '../lib/api';
+import { clearAppBadge } from '../lib/badge';
 import { qk } from '../lib/queries';
 import { formatDay, parseSqlDate } from '../lib/format';
 import { MessageBubble } from '../components/chat/MessageBubble';
@@ -24,6 +25,8 @@ export function ChatPage() {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+
+  const reads = useQuery({ queryKey: qk.reads, queryFn: api.reads });
 
   // Pages arrive newest-first; flip them so the oldest sits at the top of the scroller.
   const messages = feed.data ? [...feed.data.pages].reverse().flatMap((p) => p.messages) : [];
@@ -69,6 +72,24 @@ export function ChatPage() {
       bottomRef.current?.scrollIntoView({ block: 'end' });
     }
   }, [lastId, messages.length]);
+
+  // Having the chat open counts as reading it, so the mark follows the newest message.
+  const markedRef = useRef(0);
+  useEffect(() => {
+    if (!lastId) return;
+    const mark = () => {
+      if (document.visibilityState !== 'visible' || lastId <= markedRef.current) return;
+      markedRef.current = lastId;
+      clearAppBadge();
+      queryClient.setQueryData(qk.unread, { count: 0 });
+      api.markRead(lastId).catch(() => {
+        markedRef.current = 0;
+      });
+    };
+    mark();
+    document.addEventListener('visibilitychange', mark);
+    return () => document.removeEventListener('visibilitychange', mark);
+  }, [lastId, queryClient]);
 
   const onScroll = useCallback(() => {
     const scroller = scrollerRef.current;
@@ -148,6 +169,7 @@ export function ChatPage() {
                 )}
                 <MessageBubble
                   message={message}
+                  reads={reads.data ?? []}
                   showAuthor={showAuthor}
                   onReply={(m) => {
                     setEditing(null);

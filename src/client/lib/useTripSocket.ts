@@ -1,13 +1,33 @@
 import { useEffect, useRef, useState } from 'react';
-import { useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { useQueryClient, type InfiniteData, type QueryClient } from '@tanstack/react-query';
 import type { TripEvent } from '@shared/events';
-import type { Message, MessagePage } from '@shared/types';
+import type { Me, Message, MessagePage, MessageRead } from '@shared/types';
+import { setAppBadge } from './badge';
 import { qk } from './queries';
 
 const PING_INTERVAL_MS = 45_000;
 const MAX_BACKOFF_MS = 30_000;
 
 type MessageFeed = InfiniteData<MessagePage, string | null>;
+
+/** Chat is open and in front — ChatPage will mark the message read itself. */
+function isReadingChat(): boolean {
+  return location.pathname === '/' && document.visibilityState === 'visible';
+}
+
+function bumpUnread(queryClient: QueryClient, authorId: number): void {
+  const me = queryClient.getQueryData<Me | null>(qk.me);
+  if (isReadingChat() || (me && authorId === me.id)) return;
+
+  if (me) {
+    const previous = queryClient.getQueryData<{ count: number }>(qk.unread)?.count ?? 0;
+    const next = previous + 1;
+    queryClient.setQueryData(qk.unread, { count: next });
+    setAppBadge(next);
+  }
+  // Confirm against the server in case we drifted (e.g. after a reconnect gap).
+  void queryClient.invalidateQueries({ queryKey: qk.unread });
+}
 
 function upsertMessage(feed: MessageFeed | undefined, message: Message): MessageFeed | undefined {
   if (!feed) return feed;
@@ -78,6 +98,7 @@ export function useTripSocket(enabled: boolean): { online: number; connected: bo
         setConnected(true);
         // A dropped socket may have missed writes; resync the newest slice.
         void queryClient.invalidateQueries({ queryKey: qk.messages });
+        void queryClient.invalidateQueries({ queryKey: qk.reads });
         pingTimer = window.setInterval(() => socket?.send('ping'), PING_INTERVAL_MS);
       };
 
@@ -111,11 +132,28 @@ export function useTripSocket(enabled: boolean): { online: number; connected: bo
           queryClient.setQueryData<MessageFeed>(qk.messages, (feed) =>
             upsertMessage(feed, event.payload),
           );
+          if (event.type === 'message.created') {
+            bumpUnread(queryClient, event.payload.userId);
+          }
           break;
         case 'reaction.toggled':
           queryClient.setQueryData<MessageFeed>(qk.messages, (feed) =>
             applyReaction(feed, event.payload),
           );
+          break;
+        case 'message.read':
+          queryClient.setQueryData<MessageRead[]>(qk.reads, (current) => {
+            if (!current) return current;
+            // A member invited since this page loaded is not in the roster yet.
+            if (!current.some((entry) => entry.userId === event.payload.userId)) {
+              return [...current, event.payload];
+            }
+            return current.map((entry) =>
+              entry.userId === event.payload.userId
+                ? { ...entry, lastReadMessageId: event.payload.lastReadMessageId }
+                : entry,
+            );
+          });
           break;
         case 'poll.created':
         case 'poll.closed':

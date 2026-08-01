@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet } from 'react-router-dom';
 import type { Me } from '@shared/types';
+import { api } from '../lib/api';
+import { setAppBadge } from '../lib/badge';
+import { qk } from '../lib/queries';
 import { SessionProvider } from '../lib/session';
 import { useTripSocket } from '../lib/useTripSocket';
 import { ProfileSheet } from './ProfileSheet';
@@ -15,10 +19,16 @@ const TABS = [
 export function AppLayout({ user }: { user: Me }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const { online, connected } = useTripSocket(true);
+  const unread = useQuery({ queryKey: qk.unread, queryFn: api.unread, refetchInterval: 60_000 });
+  const unreadCount = unread.data?.count ?? 0;
   const tabs =
     user.role === 'admin'
       ? [...TABS, { to: '/admin', label: 'Admin', icon: '⚙️', end: false }]
       : TABS;
+
+  useEffect(() => {
+    if (unread.data) setAppBadge(unread.data.count);
+  }, [unread.data]);
 
   return (
     <SessionProvider user={user}>
@@ -73,9 +83,14 @@ export function AppLayout({ user }: { user: Me }) {
                 <>
                   <span
                     aria-hidden
-                    className={`text-lg leading-none transition-transform ${isActive ? 'scale-110' : ''}`}
+                    className={`relative overflow-visible text-lg leading-none transition-transform ${isActive ? 'scale-110' : ''}`}
                   >
                     {tab.icon}
+                    {tab.to === '/' && unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-3 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[0.65rem] leading-none font-bold text-white tabular-nums shadow-sm">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
                   </span>
                   {tab.label}
                 </>

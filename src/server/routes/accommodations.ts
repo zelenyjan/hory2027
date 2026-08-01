@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { emojify } from '../../shared/emoticons';
 import {
   createAccommodationSchema,
   createCommentSchema,
@@ -13,6 +14,7 @@ import {
   providerFromUrl,
 } from '../db/accommodations';
 import { broadcast, intParam, parseBody } from '../middleware';
+import { notifyOthers, preview } from '../push/notify';
 import type { AppEnv } from '../types';
 
 export const accommodationRoutes = new Hono<AppEnv>()
@@ -24,7 +26,10 @@ export const accommodationRoutes = new Hono<AppEnv>()
   .get('/locations', async (c) => c.json(await listLocations(c.env.DB)))
 
   .post('/', async (c) => {
-    const { url, priceCzk, location, comment } = await parseBody(c, createAccommodationSchema);
+    const { url, title, priceCzk, location, comment } = await parseBody(
+      c,
+      createAccommodationSchema,
+    );
     const user = c.get('user');
 
     // Reuse the existing spelling of a location so "Sölden"/"sölden" stay one bucket.
@@ -35,12 +40,13 @@ export const accommodationRoutes = new Hono<AppEnv>()
       .first<{ location: string }>();
 
     const row = await c.env.DB.prepare(
-      `INSERT INTO accommodations (user_id, url, provider, location, total_price_czk, comment)
-       VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
+      `INSERT INTO accommodations (user_id, url, title, provider, location, total_price_czk, comment)
+       VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,
     )
       .bind(
         user.id,
         url,
+        title || null,
         providerFromUrl(url),
         known?.location ?? location,
         priceCzk,
@@ -49,7 +55,14 @@ export const accommodationRoutes = new Hono<AppEnv>()
       .first<{ id: number }>();
 
     broadcast(c, { type: 'accommodation.created', payload: { id: row!.id } });
-    return c.json((await getAccommodation(c.env.DB, row!.id, user.id))!, 201);
+    const place = (await getAccommodation(c.env.DB, row!.id, user.id))!;
+    notifyOthers(c, user.id, {
+      title: `${user.name} added a place`,
+      body: preview([place.title, place.location].filter(Boolean).join(' · ')),
+      url: `/places/${place.id}`,
+      tag: `place-${place.id}`,
+    });
+    return c.json(place, 201);
   })
 
   .get('/:id', async (c) => {
@@ -118,7 +131,7 @@ export const accommodationRoutes = new Hono<AppEnv>()
     await c.env.DB.prepare(
       'INSERT INTO accommodation_comments (accommodation_id, user_id, body) VALUES (?, ?, ?)',
     )
-      .bind(accommodationId, user.id, body)
+      .bind(accommodationId, user.id, emojify(body))
       .run();
 
     broadcast(c, { type: 'comment.created', payload: { accommodationId } });

@@ -6,6 +6,7 @@ import type {
   Me,
   Message,
   MessagePage,
+  MessageRead,
   Poll,
 } from '@shared/types';
 
@@ -51,6 +52,17 @@ export const api = {
   deleteMessage: (id: number) => send<Message>('DELETE', `/messages/${id}`),
   toggleReaction: (id: number, emoji: string) =>
     send<{ added: boolean }>('PUT', `/messages/${id}/reactions`, { emoji }),
+  reads: () => request<MessageRead[]>('/messages/reads'),
+  unread: () => request<{ count: number }>('/messages/unread'),
+  markRead: (messageId: number) =>
+    send<{ lastReadMessageId: number }>('POST', '/messages/read', { messageId }),
+
+  pushKey: () => request<{ key: string | null }>('/push/key'),
+  pushSubscribe: (subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    send<{ ok: true }>('POST', '/push/subscribe', subscription),
+  pushUnsubscribe: (endpoint: string) =>
+    send<{ ok: true }>('POST', '/push/unsubscribe', { endpoint }),
+  pushTest: () => send<{ sent: number }>('POST', '/push/test').then((r) => r.sent),
 
   polls: () => request<Poll[]>('/polls'),
   createPoll: (question: string, options: string[], multiChoice: boolean) =>
@@ -68,6 +80,7 @@ export const api = {
   locations: () => request<LocationCount[]>('/accommodations/locations'),
   createAccommodation: (input: {
     url: string;
+    title?: string;
     priceCzk: number;
     location: string;
     comment?: string;

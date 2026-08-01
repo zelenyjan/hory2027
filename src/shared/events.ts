@@ -14,6 +14,7 @@ export type TripEvent =
         added: boolean;
       };
     }
+  | { type: 'message.read'; payload: { userId: number; name: string; lastReadMessageId: number } }
   | { type: 'poll.created'; payload: { pollId: number } }
   | { type: 'poll.closed'; payload: { pollId: number } }
   | { type: 'poll.deleted'; payload: { pollId: number } }

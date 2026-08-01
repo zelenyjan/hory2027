@@ -34,8 +34,21 @@ export function PlaceCard({ place }: { place: Accommodation }) {
       <header className="flex items-start gap-3">
         <ProviderBadge provider={place.provider} url={place.url} />
         <div className="min-w-0 flex-1">
-          <h3 className="leading-tight font-semibold wrap-anywhere">{place.location}</h3>
+          <h3 className="leading-tight font-semibold wrap-anywhere">
+            <a
+              href={place.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="underline-offset-2 hover:text-brand hover:underline"
+            >
+              {place.title ?? place.location}
+              <span aria-hidden className="ml-1 text-xs font-normal text-ink-soft">
+                ↗
+              </span>
+            </a>
+          </h3>
           <p className="text-xs text-ink-soft">
+            {place.title && `📍 ${place.location} · `}
             {place.userName} · {formatRelative(place.createdAt)}
           </p>
         </div>

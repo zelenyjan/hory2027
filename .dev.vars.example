@@ -1,2 +1,7 @@
 SESSION_SECRET="a-long-random-string"
 ADMIN_INITIAL_PASSWORD="the-password-you-first-sign-in-with"
+
+# Web Push (generate with: node scripts/vapid.mjs)
+VAPID_PUBLIC_KEY=""
+VAPID_PRIVATE_KEY=""
+VAPID_SUBJECT="mailto:admin@hory2027.baby"

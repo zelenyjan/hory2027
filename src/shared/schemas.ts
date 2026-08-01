@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 export const MESSAGE_MAX = 4000;
 export const COMMENT_MAX = 2000;
+export const TITLE_MAX = 160;
 export const PASSWORD_MIN = 10;
 export const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
@@ -40,6 +41,7 @@ export const votePollSchema = z.object({
 
 export const createAccommodationSchema = z.object({
   url: z.url().max(2000),
+  title: z.string().trim().max(TITLE_MAX).optional(),
   priceCzk: z.number().int().positive().max(100_000_000),
   location: trimmed(120),
   comment: z.string().trim().max(COMMENT_MAX).optional(),
@@ -50,6 +52,18 @@ export const rateAccommodationSchema = z.object({
 });
 
 export const createCommentSchema = z.object({ body: trimmed(COMMENT_MAX) });
+
+export const markReadSchema = z.object({ messageId: z.number().int().positive() });
+
+export const pushSubscribeSchema = z.object({
+  endpoint: z.url().max(1000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(200),
+    auth: z.string().min(1).max(100),
+  }),
+});
+
+export const pushUnsubscribeSchema = z.object({ endpoint: z.url().max(1000) });
 
 export const createUserSchema = z.object({ name: trimmed(80) });
 

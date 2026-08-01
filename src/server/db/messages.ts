@@ -1,4 +1,4 @@
-import type { Message, MessagePage, UserRef } from '../../shared/types';
+import type { Message, MessagePage, MessageRead, UserRef } from '../../shared/types';
 
 type MessageRow = {
   id: number;
@@ -129,6 +129,56 @@ export async function getMessage(db: D1Database, id: number): Promise<Message | 
   if (!row) return null;
   const reactions = await reactionsFor(db, [id]);
   return mapRow(row, reactions.get(id) ?? []);
+}
+
+/** Everyone active, so the client can also tell who has *not* caught up yet. */
+export async function listReads(db: D1Database): Promise<MessageRead[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT u.id AS userId, u.name, COALESCE(r.last_read_message_id, 0) AS lastReadMessageId
+         FROM users u LEFT JOIN message_reads r ON r.user_id = u.id
+        WHERE u.active = 1 ORDER BY u.name COLLATE NOCASE`,
+    )
+    .all<MessageRead>();
+  return results;
+}
+
+const UNREAD_PER_USER = `
+  SELECT u.id AS userId,
+         (SELECT COUNT(*) FROM messages m
+           WHERE m.deleted_at IS NULL AND m.user_id != u.id
+             AND m.id > COALESCE(
+                   (SELECT last_read_message_id FROM message_reads r WHERE r.user_id = u.id), 0)
+         ) AS unread
+    FROM users u WHERE u.active = 1`;
+
+export async function unreadCounts(db: D1Database): Promise<Map<number, number>> {
+  const { results } = await db.prepare(UNREAD_PER_USER).all<{ userId: number; unread: number }>();
+  return new Map(results.map((row) => [row.userId, row.unread]));
+}
+
+export async function unreadCount(db: D1Database, userId: number): Promise<number> {
+  const row = await db
+    .prepare(`SELECT unread FROM (${UNREAD_PER_USER}) WHERE userId = ?`)
+    .bind(userId)
+    .first<{ unread: number }>();
+  return row?.unread ?? 0;
+}
+
+/** High-water mark: never moves backwards, never past the newest message that exists. */
+export async function markRead(db: D1Database, userId: number, messageId: number): Promise<number> {
+  const row = await db
+    .prepare(
+      `INSERT INTO message_reads (user_id, last_read_message_id)
+       VALUES (?1, MIN(?2, (SELECT COALESCE(MAX(id), 0) FROM messages)))
+       ON CONFLICT (user_id) DO UPDATE
+          SET last_read_message_id = MAX(excluded.last_read_message_id, last_read_message_id),
+              updated_at = datetime('now')
+       RETURNING last_read_message_id AS lastReadMessageId`,
+    )
+    .bind(userId, messageId)
+    .first<{ lastReadMessageId: number }>();
+  return row!.lastReadMessageId;
 }
 
 export async function insertMessage(

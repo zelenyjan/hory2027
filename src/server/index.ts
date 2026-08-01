@@ -6,6 +6,7 @@ import { messageRoutes } from './routes/messages';
 import { pollRoutes } from './routes/polls';
 import { accommodationRoutes, commentRoutes } from './routes/accommodations';
 import { adminRoutes } from './routes/admin';
+import { pushRoutes } from './routes/push';
 import { limitLogins, limitWrites, requireAdmin, requireAuth } from './middleware';
 import { resolveSession } from './auth/session';
 import type { AppEnv } from './types';
@@ -38,11 +39,13 @@ const api = new Hono<AppEnv>()
   .use('/polls/*', requireAuth, limitWrites)
   .use('/accommodations/*', requireAuth, limitWrites)
   .use('/comments/*', requireAuth, limitWrites)
+  .use('/push/*', requireAuth, limitWrites)
   .use('/admin/*', requireAuth, requireAdmin, limitWrites)
   .route('/messages', messageRoutes)
   .route('/polls', pollRoutes)
   .route('/accommodations', accommodationRoutes)
   .route('/comments', commentRoutes)
+  .route('/push', pushRoutes)
   .route('/admin', adminRoutes);
 
 api.get('/ws', async (c) => {

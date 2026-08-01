@@ -69,10 +69,10 @@ if ((await text()).includes('Choose your password')) {
 await page.waitForSelector('nav a[href="/voting"]', { timeout: 10_000 });
 await shot('02-chat');
 
-step('Send a message');
-await page.type('textarea', 'Ahoj z prohlizece');
+step('Send a message with emoticons');
+await page.type('textarea', 'Ahoj z prohlizece :) <3');
 await clickText('button', 'Send');
-await page.waitForFunction(() => document.body.innerText.includes('Ahoj z prohlizece'), {
+await page.waitForFunction(() => document.body.innerText.includes('Ahoj z prohlizece 🙂 ❤️'), {
   timeout: 10_000,
 });
 await shot('03-message-sent');
@@ -106,10 +106,28 @@ await shot('08-places');
 await clickText('button', 'Cheapest');
 await new Promise((r) => setTimeout(r, 600));
 console.log(`  url after sort: ${page.url()}`);
-await clickText('button', 'Sölden (2)');
+await clickText('button', 'Sölden (');
 await new Promise((r) => setTimeout(r, 800));
 console.log(`  url after filter: ${page.url()}`);
 await shot('09-places-filtered');
+
+step('Add a place with a name');
+await clickText('button', 'Add place');
+await page.waitForSelector('div[role="dialog"] form');
+await page.type('div[role="dialog"] input[placeholder="Chalet Alpenrose"]', 'Haus Testovaci');
+await page.type(
+  'div[role="dialog"] input[type="url"]',
+  'https://www.booking.com/hotel/at/testovaci.html',
+);
+await page.type('div[role="dialog"] input[type="number"]', '41000');
+await page.type('div[role="dialog"] input[placeholder="Sölden"]', 'Sölden');
+await clickText('div[role="dialog"] button', 'Add to shortlist');
+await page.waitForFunction(() => document.body.innerText.includes('Haus Testovaci'), {
+  timeout: 10_000,
+});
+const titleHref = await page.$eval('h3 a', (n) => n.getAttribute('href'));
+console.log(`  title links to: ${titleHref}`);
+await shot('09b-place-with-name');
 
 step('Place detail + comment');
 await clickText('a', '💬');
@@ -131,6 +149,37 @@ await page.waitForSelector('div[role="dialog"]', { timeout: 10_000 });
 await shot('12-invite-link');
 const invite = await page.$eval('div[role="dialog"] code', (n) => n.textContent);
 console.log(`  invite link: ${invite}`);
+await clickText('div[role="dialog"] button', 'Close');
+
+step('Read receipts: invited member opens the chat');
+await page.click('nav a[href="/"]');
+await page.waitForSelector('div[id^="message-"]');
+const ticksBefore = await page.evaluate(
+  () => [...document.querySelectorAll('div[id^="message-"]')].at(-1)?.innerText ?? '',
+);
+console.log(`  own message before: ${JSON.stringify(ticksBefore.slice(-30))}`);
+
+const guest = await browser.newPage();
+await guest.setViewport({ width: 390, height: 844 });
+await guest.goto(invite, { waitUntil: 'networkidle0' });
+await guest.waitForSelector('nav a[href="/voting"]', { timeout: 10_000 });
+await guest.close();
+
+await page.bringToFront();
+await page.waitForFunction(
+  () => {
+    const bubbles = [...document.querySelectorAll('div[id^="message-"]')];
+    return bubbles.some((b) => b.innerText.includes('✓✓'));
+  },
+  { timeout: 10_000 },
+);
+await shot('12b-read-receipts');
+const bubbleList = await page.$$('div[id^="message-"] div[role="button"]');
+await bubbleList[bubbleList.length - 1].click();
+await page.waitForSelector('div[role="dialog"]');
+const readBy = await page.$eval('div[role="dialog"]', (n) => n.innerText.split('\n')[1] ?? '');
+console.log(`  sheet says: ${readBy}`);
+await shot('12c-read-by');
 await clickText('div[role="dialog"] button', 'Close');
 
 step('Profile sheet + theme switch');

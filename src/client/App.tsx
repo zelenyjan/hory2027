@@ -3,6 +3,7 @@ import { useMe } from './lib/session';
 import { AppLayout } from './components/AppLayout';
 import { LoginPage } from './pages/LoginPage';
 import { SetPasswordGate } from './pages/SetPasswordGate';
+import { AboutPage } from './pages/AboutPage';
 import { ChatPage } from './pages/ChatPage';
 import { VotingPage } from './pages/VotingPage';
 import { PlacesPage } from './pages/PlacesPage';
@@ -24,6 +25,7 @@ export function App() {
   if (!user) {
     return (
       <Routes>
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
@@ -34,6 +36,7 @@ export function App() {
 
   return (
     <Routes>
+      <Route path="/about" element={<AboutPage />} />
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route element={<AppLayout user={user} />}>
         <Route path="/" element={<ChatPage />} />

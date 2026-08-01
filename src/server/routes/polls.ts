@@ -3,6 +3,7 @@ import { HTTPException } from 'hono/http-exception';
 import { createPollSchema, votePollSchema } from '../../shared/schemas';
 import { getPoll, listPolls } from '../db/polls';
 import { broadcast, intParam, parseBody } from '../middleware';
+import { notifyOthers, preview } from '../push/notify';
 import type { AppEnv } from '../types';
 
 export const pollRoutes = new Hono<AppEnv>()
@@ -27,6 +28,12 @@ export const pollRoutes = new Hono<AppEnv>()
     );
 
     broadcast(c, { type: 'poll.created', payload: { pollId: poll!.id } });
+    notifyOthers(c, user.id, {
+      title: `${user.name} started a poll`,
+      body: preview(question),
+      url: '/voting',
+      tag: `poll-${poll!.id}`,
+    });
     return c.json((await getPoll(c.env.DB, poll!.id))!, 201);
   })
 
@@ -62,6 +69,12 @@ export const pollRoutes = new Hono<AppEnv>()
     await c.env.DB.batch(statements);
 
     broadcast(c, { type: 'poll.voted', payload: { pollId } });
+    notifyOthers(c, user.id, {
+      title: `${user.name} voted`,
+      body: preview(poll.question),
+      url: '/voting',
+      tag: `poll-vote-${pollId}`,
+    });
     return c.json((await getPoll(c.env.DB, pollId))!);
   })
 

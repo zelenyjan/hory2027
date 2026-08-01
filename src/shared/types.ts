@@ -36,6 +36,13 @@ export type MessagePage = {
   nextCursor: string | null;
 };
 
+/** Everyone in the trip and how far down the chat they have read (0 = never opened it). */
+export type MessageRead = {
+  userId: number;
+  name: string;
+  lastReadMessageId: number;
+};
+
 export type PollOption = {
   id: number;
   label: string;
@@ -59,6 +66,7 @@ export type Accommodation = {
   userId: number;
   userName: string;
   url: string;
+  title: string | null;
   provider: Provider;
   location: string;
   totalPriceCzk: number;

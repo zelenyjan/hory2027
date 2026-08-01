@@ -1,12 +1,22 @@
 import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { emojify } from '../../shared/emoticons';
 import {
   createMessageSchema,
+  markReadSchema,
   toggleReactionSchema,
   updateMessageSchema,
 } from '../../shared/schemas';
-import { getMessage, insertMessage, listMessages } from '../db/messages';
+import {
+  getMessage,
+  insertMessage,
+  listMessages,
+  listReads,
+  markRead,
+  unreadCount,
+} from '../db/messages';
 import { broadcast, intParam, parseBody } from '../middleware';
+import { notifyOthers, preview } from '../push/notify';
 import type { AppEnv } from '../types';
 
 const DEFAULT_LIMIT = 50;
@@ -40,10 +50,31 @@ export const messageRoutes = new Hono<AppEnv>()
       if (!exists) throw new HTTPException(400, { message: 'Quoted message not found' });
     }
 
-    const id = await insertMessage(c.env.DB, user.id, body, quotedMessageId ?? null);
+    const id = await insertMessage(c.env.DB, user.id, emojify(body), quotedMessageId ?? null);
     const message = (await getMessage(c.env.DB, id))!;
     broadcast(c, { type: 'message.created', payload: message });
+    notifyOthers(c, user.id, {
+      title: user.name,
+      body: preview(message.body),
+      url: '/',
+      tag: 'chat',
+    });
     return c.json(message, 201);
+  })
+
+  .get('/reads', async (c) => c.json(await listReads(c.env.DB)))
+
+  .get('/unread', async (c) => c.json({ count: await unreadCount(c.env.DB, c.get('user').id) }))
+
+  .post('/read', async (c) => {
+    const { messageId } = await parseBody(c, markReadSchema);
+    const user = c.get('user');
+    const lastReadMessageId = await markRead(c.env.DB, user.id, messageId);
+    broadcast(c, {
+      type: 'message.read',
+      payload: { userId: user.id, name: user.name, lastReadMessageId },
+    });
+    return c.json({ lastReadMessageId });
   })
 
   .patch('/:id', async (c) => {
@@ -55,7 +86,7 @@ export const messageRoutes = new Hono<AppEnv>()
     if (row.deletedAt) throw new HTTPException(400, { message: 'Message is deleted' });
 
     await c.env.DB.prepare("UPDATE messages SET body = ?, edited_at = datetime('now') WHERE id = ?")
-      .bind(body, id)
+      .bind(emojify(body), id)
       .run();
     const message = (await getMessage(c.env.DB, id))!;
     broadcast(c, { type: 'message.updated', payload: message });

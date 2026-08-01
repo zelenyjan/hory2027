@@ -16,22 +16,22 @@ The app must be trivially cheap to run (Cloudflare free/paid-lite tier), require
 
 ### 1.2 Non-goals (v1)
 
-No push notifications, no email delivery, no file/photo uploads (candidate for v2 via R2), no multi-trip support (one trip = one deployment; multi-trip is a v2 candidate), no automated scraping of Booking/Airbnb metadata (see §6.3), no native mobile app — the SPA must simply work well on mobile browsers.
+No email delivery, no file/photo uploads (candidate for v2 via R2), no multi-trip support (one trip = one deployment; multi-trip is a v2 candidate), no automated scraping of Booking/Airbnb metadata (see §6.3), no native mobile app — the SPA is a PWA with Web Push instead.
 
 ---
 
 ## 2. Tech stack & Cloudflare mapping
 
-| Concern | Choice |
-|---|---|
-| Backend framework | Hono on Cloudflare Workers (TypeScript) |
-| Frontend | React 19 + Vite + TypeScript, Tailwind CSS v4, TanStack Query, react-router |
-| Hosting/runtime | Single Cloudflare Worker; SPA served via Workers Static Assets from the same Worker |
-| Database | Cloudflare D1 (SQLite), migrations via `wrangler d1 migrations` |
-| Real-time | One Durable Object (`TripRoom`) using the WebSocket Hibernation API |
-| Secrets | Worker secrets: `SESSION_SECRET`, `ADMIN_INITIAL_PASSWORD` |
-| Tooling | wrangler, pnpm workspace (`apps/web`, `apps/api` or a single app with `/src/server` + `/src/client`) |
-| CI/CD | `wrangler deploy` locally or via GitHub Actions (optional) |
+| Concern           | Choice                                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------- |
+| Backend framework | Hono on Cloudflare Workers (TypeScript)                                                              |
+| Frontend          | React 19 + Vite + TypeScript, Tailwind CSS v4, TanStack Query, react-router                          |
+| Hosting/runtime   | Single Cloudflare Worker; SPA served via Workers Static Assets from the same Worker                  |
+| Database          | Cloudflare D1 (SQLite), migrations via `wrangler d1 migrations`                                      |
+| Real-time         | One Durable Object (`TripRoom`) using the WebSocket Hibernation API                                  |
+| Secrets           | Worker secrets: `SESSION_SECRET`, `ADMIN_INITIAL_PASSWORD`                                           |
+| Tooling           | wrangler, pnpm workspace (`apps/web`, `apps/api` or a single app with `/src/server` + `/src/client`) |
+| CI/CD             | `wrangler deploy` locally or via GitHub Actions (optional)                                           |
 
 Everything runs in one Worker deployment: same origin for API (`/api/*`), WebSocket (`/api/ws`), and static SPA (fallback route). No CORS, one `wrangler.jsonc`.
 
@@ -58,20 +58,20 @@ ski-trip-hub/
 
 Two roles: `admin` and `member`. The admin is also a regular participant.
 
-| Action | Member | Admin |
-|---|---|---|
-| Read everything, chat, react, vote, comment | ✔ | ✔ |
-| Edit/delete **own** chat message | ✔ | ✔ |
-| Delete **any** chat message | — | ✔ |
-| Create poll | ✔ | ✔ |
-| Close/delete **own** poll | ✔ | ✔ |
-| Delete **any** poll | — | ✔ |
-| Add accommodation | ✔ | ✔ |
-| Delete **own** accommodation | ✔ | ✔ |
-| Delete **any** accommodation | — | ✔ |
-| Delete own comment | ✔ | ✔ |
-| Delete any comment | — | ✔ |
-| Create/revoke/regenerate invites, rename users, deactivate users | — | ✔ |
+| Action                                                           | Member | Admin |
+| ---------------------------------------------------------------- | ------ | ----- |
+| Read everything, chat, react, vote, comment                      | ✔      | ✔     |
+| Edit/delete **own** chat message                                 | ✔      | ✔     |
+| Delete **any** chat message                                      | —      | ✔     |
+| Create poll                                                      | ✔      | ✔     |
+| Close/delete **own** poll                                        | ✔      | ✔     |
+| Delete **any** poll                                              | —      | ✔     |
+| Add accommodation                                                | ✔      | ✔     |
+| Delete **own** accommodation                                     | ✔      | ✔     |
+| Delete **any** accommodation                                     | —      | ✔     |
+| Delete own comment                                               | ✔      | ✔     |
+| Delete any comment                                               | —      | ✔     |
+| Create/revoke/regenerate invites, rename users, deactivate users | —      | ✔     |
 
 Deleting an accommodation cascades its ratings and comments. Deleting a poll cascades options and votes.
 
@@ -85,11 +85,11 @@ The admin account is seeded by the initial D1 migration (`role='admin'`, no pass
 
 ### 4.2 Invite links (passwordless login)
 
-When the admin creates a user with a display name, the server generates a 32-byte random token, stores only its SHA-256 hash in `users.invite_token_hash`, and returns the link once: `https://<host>/join/<token>`. Visiting the link looks up the hash, verifies the user is active and the token not revoked, creates a session, and redirects into the app. The link works indefinitely and repeatedly — it *is* the credential — unless the admin revokes or regenerates it (regeneration invalidates the old link and produces a new one, for the inevitable "I lost the link" case).
+When the admin creates a user with a display name, the server generates a 32-byte random token, stores only its SHA-256 hash in `users.invite_token_hash`, and returns the link once: `https://<host>/join/<token>`. Visiting the link looks up the hash, verifies the user is active and the token not revoked, creates a session, and redirects into the app. The link works indefinitely and repeatedly — it _is_ the credential — unless the admin revokes or regenerates it (regeneration invalidates the old link and produces a new one, for the inevitable "I lost the link" case).
 
 ### 4.3 Optional password
 
-Any member can set a password in their profile (min. 10 chars). After that, they can also log in with name + password on `/login`. The invite link keeps working unless the user or admin disables it. Password hashing uses PBKDF2-SHA256 (WebCrypto, ~300k iterations, per-user salt) — the pragmatic standard on Workers, where bcrypt/argon2 aren't natively available.
+Any member can set a password in their profile (min. 10 chars). After that, they can also log in with name + password on `/login`. The invite link keeps working unless the user or admin disables it. Password hashing uses PBKDF2-SHA256 (WebCrypto, 100k iterations — the maximum Workers allows — per-user salt) — the pragmatic standard on Workers, where bcrypt/argon2 aren't natively available.
 
 ### 4.4 Sessions
 
@@ -243,7 +243,7 @@ POST   /api/messages                  { body, quotedMessageId? }
 PATCH  /api/messages/:id              { body }            # author only
 DELETE /api/messages/:id                                  # author or admin
 PUT    /api/messages/:id/reactions    { emoji }           # toggle
- 
+
 GET    /api/polls
 POST   /api/polls                     { question, options[], multiChoice }
 POST   /api/polls/:id/votes           { optionIds[] }     # replaces own vote(s)
@@ -289,13 +289,13 @@ Event envelope:
 
 ```ts
 type Event =
-  | { type: 'message.created' | 'message.updated' | 'message.deleted', payload: Message }
-  | { type: 'reaction.toggled', payload: { messageId, userId, emoji, added } }
-  | { type: 'poll.created' | 'poll.closed' | 'poll.deleted', payload: { pollId } }
-  | { type: 'poll.voted', payload: { pollId } }
-  | { type: 'accommodation.created' | 'accommodation.deleted', payload: { id } }
-  | { type: 'accommodation.rated', payload: { id } }
-  | { type: 'comment.created' | 'comment.deleted', payload: { accommodationId } }
+  | { type: 'message.created' | 'message.updated' | 'message.deleted'; payload: Message }
+  | { type: 'reaction.toggled'; payload: { messageId; userId; emoji; added } }
+  | { type: 'poll.created' | 'poll.closed' | 'poll.deleted'; payload: { pollId } }
+  | { type: 'poll.voted'; payload: { pollId } }
+  | { type: 'accommodation.created' | 'accommodation.deleted'; payload: { id } }
+  | { type: 'accommodation.rated'; payload: { id } }
+  | { type: 'comment.created' | 'comment.deleted'; payload: { accommodationId } };
 ```
 
 WebSocket auth: the `/api/ws` upgrade request passes normal session-cookie middleware before forwarding to the DO; the DO tags each socket with the user id (`serializeAttachment`). Clients reconnect with exponential backoff and refetch the newest page on reconnect to close any gap. Presence ("3 online") is a cheap add-on later — the DO already knows its socket count.
@@ -342,11 +342,11 @@ Cost expectation: within Workers free tier for this group size; the Workers Paid
 2. Deleted messages/comments leave a tombstone; bodies are blanked in the DB.
 3. Prices are whole CZK only (single-currency; convert mentally or in the comment if a listing is in EUR).
 4. No accommodation title field — the location is the card heading and the URL/provider icon is the link; no scraping in v1.
-8. Location is free text (not a fixed enum) with autocomplete over existing values; case-insensitive matching prevents duplicates like "Sölden"/"sölden".
-5. One trip per deployment; no trip switcher.
-6. Chat sends go over REST; WebSocket is receive-only fan-out in v1.
-7. Single fixed reaction picker matching WhatsApp's six, plus free emoji entry.
+5. Location is free text (not a fixed enum) with autocomplete over existing values; case-insensitive matching prevents duplicates like "Sölden"/"sölden".
+6. One trip per deployment; no trip switcher.
+7. Chat sends go over REST; WebSocket is receive-only fan-out in v1.
+8. Single fixed reaction picker matching WhatsApp's six, plus free emoji entry.
 
 ## 13. v2 candidates
 
-Photo uploads to R2 (chat + accommodation galleries), best-effort OG metadata fetch, presence indicator and typing dots, web push notifications, poll deadlines, multi-trip support with archives, export of the final decision (chosen accommodation + roster) as a summary page.
+Photo uploads to R2 (chat + accommodation galleries), best-effort OG metadata fetch, presence indicator and typing dots, poll deadlines, multi-trip support with archives, export of the final decision (chosen accommodation + roster) as a summary page.

@@ -1,50 +1,43 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "hory2027",
-	"main": "./src/server/index.ts",
-	"compatibility_date": "2026-08-01",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	"assets": {
-		"binding": "ASSETS",
-		"not_found_handling": "single-page-application",
-		"run_worker_first": [
-			"/api/*",
-			"/join/*"
-		],
-	},
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "hory2027",
-			"database_id": "e7ea6cb4-d8d2-4d9a-90f8-d161a5eb637b",
-			"migrations_dir": "migrations"
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"name": "TRIP_ROOM",
-				"class_name": "TripRoom"
-			}
-		],
-	},
-	"migrations": [
-		{
-			"tag": "v1",
-			"new_sqlite_classes": [
-				"TripRoom"
-			]
-		}
-	],
-	"routes": [
-		{
-			"pattern": "hory2027.baby",
-			"custom_domain": true
-		}
-	],
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hory2027",
+  "main": "./src/server/index.ts",
+  "compatibility_date": "2026-08-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/join/*"],
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hory2027",
+      "database_id": "e7ea6cb4-d8d2-4d9a-90f8-d161a5eb637b",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "TRIP_ROOM",
+        "class_name": "TripRoom",
+      },
+    ],
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TripRoom"],
+    },
+  ],
+  "routes": [
+    {
+      "pattern": "hory2027.baby",
+      "custom_domain": true,
+    },
+  ],
 }

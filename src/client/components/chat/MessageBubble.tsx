@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { Message } from '@shared/types';
+import type { Message, MessageRead } from '@shared/types';
 import { REACTION_EMOJIS } from '@shared/schemas';
 import { formatTime, splitLinks } from '../../lib/format';
 import { useSession } from '../../lib/session';
@@ -7,6 +7,7 @@ import { Avatar, Sheet } from '../ui';
 
 type Props = {
   message: Message;
+  reads: MessageRead[];
   showAuthor: boolean;
   onReply: (message: Message) => void;
   onEdit: (message: Message) => void;
@@ -40,6 +41,7 @@ function Body({ text }: { text: string }) {
 
 export function MessageBubble({
   message,
+  reads,
   showAuthor,
   onReply,
   onEdit,
@@ -51,6 +53,12 @@ export function MessageBubble({
   const [menuOpen, setMenuOpen] = useState(false);
   const mine = message.userId === me.id;
   const canDelete = mine || me.role === 'admin';
+
+  const others = reads.filter((r) => r.userId !== me.id);
+  const readers = others.filter((r) => r.lastReadMessageId >= message.id);
+  const pending = others.filter((r) => r.lastReadMessageId < message.id);
+  const readByAll = others.length > 0 && pending.length === 0;
+  const showTicks = mine && !message.deleted && others.length > 0;
 
   const act = (fn: () => void) => () => {
     setMenuOpen(false);
@@ -114,6 +122,18 @@ export function MessageBubble({
           >
             {message.editedAt && 'edited · '}
             {formatTime(message.createdAt)}
+            {showTicks && (
+              <span
+                title={
+                  readers.length === 0
+                    ? 'Nobody has read this yet'
+                    : `Read by ${readers.map((r) => r.name).join(', ')}`
+                }
+                className={`ml-1 tracking-tighter ${readByAll ? 'text-white' : 'text-white/60'}`}
+              >
+                {readers.length === 0 ? '✓' : '✓✓'}
+              </span>
+            )}
           </span>
         </div>
 
@@ -142,6 +162,22 @@ export function MessageBubble({
       </div>
 
       <Sheet open={menuOpen} title="Message" onClose={() => setMenuOpen(false)}>
+        {showTicks && (
+          <div className="mb-5 rounded-xl border border-line/70 bg-surface p-3 text-sm">
+            <p className="font-medium">
+              {readByAll ? '✓✓ Read by everyone' : `Read by ${readers.length} of ${others.length}`}
+            </p>
+            {readers.length > 0 && !readByAll && (
+              <p className="mt-1 text-ink-soft">{readers.map((r) => r.name).join(', ')}</p>
+            )}
+            {pending.length > 0 && (
+              <p className="mt-1 text-ink-soft">
+                Waiting on {pending.map((r) => r.name).join(', ')}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="mb-5 flex justify-between gap-1">
           {REACTION_EMOJIS.map((emoji) => (
             <button

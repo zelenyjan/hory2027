@@ -3,6 +3,16 @@
 A small, private trip-planning app for one group of friends: real-time group chat, standalone
 polls, and a shared accommodation shortlist with prices, thumbs, and per-place comment threads.
 
+Chat messages and comments get classic smileys turned into emoji on the way in (`:)` → 🙂, `<3` → ❤️;
+URLs are left alone), and your own messages carry WhatsApp-style read ticks — one tick until someone
+opens the chat, two once they have, bright when the whole group has caught up. Tapping a message
+lists exactly who has read it and who is still behind. A place can be given a name, which becomes
+the card heading and links straight to the listing; without one the location is used instead.
+
+The app is installable as a PWA. From your profile, enable notifications to get Web Push alerts for
+new chat messages, new polls / votes, and new places — with an app-icon badge for unread chat.
+On iPhone, add the site to the Home Screen first; Safari only allows push for installed web apps.
+
 Everything runs in a single Cloudflare Worker: the Hono API (`/api/*`), the WebSocket fan-out
 (`/api/ws` → a `TripRoom` Durable Object), and the React SPA served from Workers Static Assets.
 D1 is the only source of truth. The full design lives in [CLAUDE.md](./CLAUDE.md).
@@ -11,15 +21,15 @@ Production: **https://hory2027.baby**
 
 ## Stack
 
-| Concern       | Choice                                                    |
-| ------------- | --------------------------------------------------------- |
-| Runtime       | Cloudflare Workers, one deployment                         |
-| API           | Hono + zod (schemas shared with the client)                |
-| Database      | Cloudflare D1 (SQLite), `wrangler d1 migrations`           |
-| Real-time     | One Durable Object using the WebSocket Hibernation API     |
-| Frontend      | React 19, Vite, TanStack Query, react-router, Tailwind v4  |
-| Theming       | Snow (default) / Night / System, remembered per device      |
-| Build/dev     | `@cloudflare/vite-plugin` (one command for client + Worker) |
+| Concern   | Choice                                                      |
+| --------- | ----------------------------------------------------------- |
+| Runtime   | Cloudflare Workers, one deployment                          |
+| API       | Hono + zod (schemas shared with the client)                 |
+| Database  | Cloudflare D1 (SQLite), `wrangler d1 migrations`            |
+| Real-time | One Durable Object using the WebSocket Hibernation API      |
+| Frontend  | React 19, Vite, TanStack Query, react-router, Tailwind v4   |
+| Theming   | Snow (default) / Night / System, remembered per device      |
+| Build/dev | `@cloudflare/vite-plugin` (one command for client + Worker) |
 
 ## Layout
 
@@ -54,17 +64,17 @@ permanent passwordless login.
 
 Useful scripts:
 
-| Command               | What it does                                                 |
-| --------------------- | ------------------------------------------------------------ |
-| `pnpm dev`            | Vite dev server with a local Worker, D1 and DO                |
-| `pnpm typecheck`      | Type-checks the client and the Worker separately              |
-| `pnpm build`          | Builds `dist/client` and `dist/hory2027`                      |
-| `pnpm preview`        | Serves the production build through the real Worker runtime   |
+| Command               | What it does                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| `pnpm dev`            | Vite dev server with a local Worker, D1 and DO                                        |
+| `pnpm typecheck`      | Type-checks the client and the Worker separately                                      |
+| `pnpm build`          | Builds `dist/client` and `dist/hory2027`                                              |
+| `pnpm preview`        | Serves the production build through the real Worker runtime                           |
 | `pnpm db:reset:local` | Throws away the local database and re-runs migrations (restart `pnpm dev` afterwards) |
-| `pnpm seed`           | Fills a fresh local database with demo content                |
-| `pnpm uicheck`        | Headless click-through of every view (needs a local Chrome)   |
-| `pnpm cf-typegen`     | Regenerates `worker-configuration.d.ts` from wrangler config  |
-| `pnpm format`         | Prettier, including Tailwind class sorting                    |
+| `pnpm seed`           | Fills a fresh local database with demo content                                        |
+| `pnpm uicheck`        | Headless click-through of every view (needs a local Chrome)                           |
+| `pnpm cf-typegen`     | Regenerates `worker-configuration.d.ts` from wrangler config                          |
+| `pnpm format`         | Prettier, including Tailwind class sorting                                            |
 
 ## First deploy
 
@@ -75,22 +85,27 @@ pnpm wrangler d1 create hory2027
 # 2. Secrets
 pnpm wrangler secret put SESSION_SECRET          # long random string
 pnpm wrangler secret put ADMIN_INITIAL_PASSWORD  # used once, for the first admin login
+node scripts/vapid.mjs                           # print VAPID_* values, then:
+pnpm wrangler secret put VAPID_PUBLIC_KEY
+pnpm wrangler secret put VAPID_PRIVATE_KEY
+pnpm wrangler secret put VAPID_SUBJECT           # e.g. mailto:admin@hory2027.baby
 
 # 3. Schema, then ship
 pnpm db:migrate:remote
-pnpm deploy
+pnpm run deploy   # "run" is required: bare `pnpm deploy` is pnpm's own command
 ```
 
 `wrangler.jsonc` attaches `hory2027.baby` as a Custom Domain, so the zone must be on Cloudflare DNS;
 TLS is automatic. Invite links are then `https://hory2027.baby/join/<token>`.
 
-Later deploys are just `pnpm deploy` (plus `pnpm db:migrate:remote` when a migration is added).
+Later deploys are just `pnpm run deploy` (plus `pnpm db:migrate:remote` when a migration is added).
 
 ## Security notes
 
 - Nothing is public: every API route and every SPA route requires a session.
 - Invite tokens are 256-bit random values, stored only as SHA-256 hashes, revocable and regenerable.
-- Passwords use PBKDF2-SHA256 (300k iterations, per-user salt) via WebCrypto, compared in constant time.
+- Passwords use PBKDF2-SHA256 (100k iterations — the Workers maximum — per-user salt) via WebCrypto,
+  compared in constant time.
 - Sessions live in D1 behind an `HttpOnly; Secure; SameSite=Lax` cookie, 90 days sliding, so
   deactivating a user instantly kills their access.
 - Writes are same-origin only (Hono CSRF plus an explicit Origin check) and rate limited per user in

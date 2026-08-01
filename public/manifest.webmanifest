@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Hory 2027",
+  "short_name": "Hory",
+  "description": "Chat, polls and the accommodation shortlist for the 2027 ski trip.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e7eefb",
+  "theme_color": "#e7eefb",
+  "lang": "en",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Voting", "url": "/voting" },
+    { "name": "Places", "url": "/places" }
+  ]
+}

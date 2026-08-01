@@ -1,4 +1,5 @@
-const PBKDF2_ITERATIONS = 300_000;
+// Workers' WebCrypto rejects anything above 100k iterations, so this is the platform ceiling.
+const PBKDF2_ITERATIONS = 100_000;
 const encoder = new TextEncoder();
 
 function toHex(buffer: ArrayBuffer): string {

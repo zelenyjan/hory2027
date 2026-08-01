@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import { qk } from '../../lib/queries';
-import { COMMENT_MAX } from '@shared/schemas';
+import { COMMENT_MAX, TITLE_MAX } from '@shared/schemas';
 import { ErrorNote, Sheet } from '../ui';
 
 export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const queryClient = useQueryClient();
   const locations = useQuery({ queryKey: qk.locations, queryFn: api.locations, enabled: open });
   const [url, setUrl] = useState('');
+  const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [location, setLocation] = useState('');
   const [comment, setComment] = useState('');
@@ -17,6 +18,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
     mutationFn: () =>
       api.createAccommodation({
         url: url.trim(),
+        title: title.trim() || undefined,
         priceCzk: Number(price),
         location: location.trim(),
         comment: comment.trim() || undefined,
@@ -25,6 +27,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
       void queryClient.invalidateQueries({ queryKey: ['accommodations'] });
       void queryClient.invalidateQueries({ queryKey: qk.locations });
       setUrl('');
+      setTitle('');
       setPrice('');
       setLocation('');
       setComment('');
@@ -41,6 +44,17 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
           create.mutate();
         }}
       >
+        <label className="block">
+          <span className="mb-1 block text-sm font-medium">Name</span>
+          <input
+            className="field"
+            maxLength={TITLE_MAX}
+            placeholder="Chalet Alpenrose"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </label>
+
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Link</span>
           <input

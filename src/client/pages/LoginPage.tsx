@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { qk } from '../lib/queries';
 import { ErrorNote } from '../components/ui';
@@ -65,6 +65,12 @@ export function LoginPage() {
             Sign in
           </button>
         </form>
+
+        <p className="mt-5 text-center text-sm text-ink-soft">
+          <Link to="/about" className="text-brand underline-offset-2 hover:underline">
+            O aplikaci — jak ji používat a nainstalovat
+          </Link>
+        </p>
       </div>
     </div>
   );

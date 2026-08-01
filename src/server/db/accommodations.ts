@@ -11,6 +11,7 @@ type AccommodationRow = {
   userId: number;
   userName: string;
   url: string;
+  title: string | null;
   provider: Provider;
   location: string;
   totalPriceCzk: number;
@@ -20,7 +21,7 @@ type AccommodationRow = {
 };
 
 const SELECT_ACCOMMODATION = `
-  SELECT a.id, a.user_id AS userId, u.name AS userName, a.url, a.provider, a.location,
+  SELECT a.id, a.user_id AS userId, u.name AS userName, a.url, a.title, a.provider, a.location,
          a.total_price_czk AS totalPriceCzk, a.comment, a.created_at AS createdAt,
          (SELECT COUNT(*) FROM accommodation_comments ac
            WHERE ac.accommodation_id = a.id AND ac.deleted_at IS NULL) AS commentCount
@@ -75,6 +76,7 @@ async function attachRatings(
       userId: row.userId,
       userName: row.userName,
       url: row.url,
+      title: row.title,
       provider: row.provider,
       location: row.location,
       totalPriceCzk: row.totalPriceCzk,
