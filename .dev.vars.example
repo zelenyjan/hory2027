@@ -1,0 +1,2 @@
+SESSION_SECRET="a-long-random-string"
+ADMIN_INITIAL_PASSWORD="the-password-you-first-sign-in-with"

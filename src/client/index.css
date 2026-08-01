@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Alpine morning: snow that is never quite white, glacier blue, low sun on the peaks. */
+@theme {
+  --color-surface: oklch(96.8% 0.016 242);
+  --color-surface-2: oklch(99.4% 0.006 242);
+  --color-line: oklch(89.5% 0.022 245);
+  --color-ink: oklch(29% 0.04 258);
+  --color-ink-soft: oklch(53% 0.03 258);
+
+  --color-brand: oklch(55% 0.18 253);
+  --color-brand-2: oklch(56% 0.19 295);
+  --color-brand-soft: oklch(94% 0.045 250);
+
+  --color-accent: oklch(62% 0.17 48);
+  --color-accent-soft: oklch(95% 0.05 62);
+
+  --color-good: oklch(58% 0.15 152);
+  --color-bad: oklch(58% 0.19 22);
+
+  --shadow-card: 0 1px 2px oklch(45% 0.06 255 / 0.07), 0 12px 28px -16px oklch(45% 0.09 255 / 0.35);
+  --shadow-bubble: 0 1px 2px oklch(45% 0.06 255 / 0.09);
+}
+
+/* Night piste. */
+.dark {
+  --color-surface: oklch(20% 0.028 264);
+  --color-surface-2: oklch(25% 0.032 264);
+  --color-line: oklch(33% 0.03 264);
+  --color-ink: oklch(96% 0.01 264);
+  --color-ink-soft: oklch(73% 0.025 264);
+
+  --color-brand: oklch(70% 0.15 253);
+  --color-brand-2: oklch(70% 0.16 300);
+  --color-brand-soft: oklch(31% 0.07 258);
+
+  --color-accent: oklch(78% 0.15 60);
+  --color-accent-soft: oklch(32% 0.07 58);
+
+  --color-good: oklch(72% 0.16 155);
+  --color-bad: oklch(70% 0.17 22);
+
+  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 14px 32px -18px oklch(0% 0 0 / 0.7);
+  --shadow-bubble: 0 1px 2px oklch(0% 0 0 / 0.25);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply bg-surface text-ink antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  /* Sky above, warm snow below — fixed so it never scrolls away. */
+  body {
+    background-image:
+      radial-gradient(130% 70% at 50% -20%, oklch(72% 0.12 245 / 0.28), transparent 70%),
+      radial-gradient(90% 50% at 105% 105%, oklch(80% 0.1 62 / 0.22), transparent 65%);
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(130% 70% at 50% -20%, oklch(50% 0.14 268 / 0.5), transparent 70%),
+      radial-gradient(90% 50% at 105% 105%, oklch(48% 0.12 305 / 0.35), transparent 65%);
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+}
+
+@utility card {
+  @apply rounded-2xl border border-line/80 bg-surface-2/95 shadow-card;
+}
+
+@utility glass {
+  @apply border-line/70 bg-surface/75 backdrop-blur-xl;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+}
+
+@utility btn-primary {
+  @apply btn bg-linear-to-br from-brand to-brand-2 text-white shadow-md shadow-brand/25 hover:brightness-110;
+}
+
+@utility btn-ghost {
+  @apply btn border border-line bg-surface-2/80 text-ink hover:border-brand/40 hover:bg-brand-soft;
+}
+
+@utility chip {
+  @apply shrink-0 rounded-full border border-line bg-surface-2/70 px-3 py-1.5 text-sm transition-colors hover:border-brand/40;
+}
+
+@utility chip-active {
+  @apply chip border-brand bg-brand-soft font-medium text-brand;
+}
+
+@utility field {
+  @apply w-full rounded-xl border border-line bg-surface/80 px-3.5 py-2.5 text-base text-ink transition-colors placeholder:text-ink-soft/70 focus:border-brand focus:bg-surface-2 focus:outline-none;
+}
+
+@utility gradient-text {
+  @apply bg-linear-to-r from-brand to-brand-2 bg-clip-text text-transparent;
+}

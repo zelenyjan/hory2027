@@ -1,0 +1,45 @@
+{
+  "name": "hory2027",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.client.json --noEmit && tsc -p tsconfig.worker.json --noEmit",
+    "cf-typegen": "wrangler types",
+    "format": "prettier --write .",
+    "seed": "node scripts/seed.mjs",
+    "uicheck": "node scripts/uicheck.mjs",
+    "db:migrate:local": "wrangler d1 migrations apply hory2027 --local",
+    "db:reset:local": "rm -rf .wrangler/state/v3/d1 && pnpm db:migrate:local",
+    "db:migrate:remote": "wrangler d1 migrations apply hory2027 --remote",
+    "deploy": "pnpm build && wrangler deploy"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "hono": "^4.12.33",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.50.0",
+    "@hookform/resolvers": "^5.6.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "puppeteer-core": "^25.4.0",
+    "react-hook-form": "^7.84.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.0",
+    "wrangler": "^4.118.0"
+  }
+}
