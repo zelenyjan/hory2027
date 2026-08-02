@@ -1,4 +1,5 @@
-import type { Message, MessagePage, MessageRead, UserRef } from '../../shared/types';
+import type { Member, Message, MessagePage, MessageRead, UserRef } from '../../shared/types';
+import { userDisplaySql } from './userDisplay';
 
 type MessageRow = {
   id: number;
@@ -15,10 +16,10 @@ type MessageRow = {
 };
 
 const SELECT_MESSAGE = `
-  SELECT m.id, m.user_id AS userId, u.name AS userName, m.body,
+  SELECT m.id, m.user_id AS userId, ${userDisplaySql('u')} AS userName, m.body,
          m.quoted_message_id AS quotedMessageId, m.created_at AS createdAt,
          m.edited_at AS editedAt, m.deleted_at AS deletedAt,
-         qu.name AS quotedUserName, q.body AS quotedBody, q.deleted_at AS quotedDeletedAt
+         ${userDisplaySql('qu')} AS quotedUserName, q.body AS quotedBody, q.deleted_at AS quotedDeletedAt
     FROM messages m
     JOIN users u ON u.id = m.user_id
     LEFT JOIN messages q ON q.id = m.quoted_message_id
@@ -63,7 +64,7 @@ async function reactionsFor(
   const placeholders = ids.map(() => '?').join(',');
   const { results } = await db
     .prepare(
-      `SELECT r.message_id AS messageId, r.emoji, r.user_id AS userId, u.name
+      `SELECT r.message_id AS messageId, r.emoji, r.user_id AS userId, ${userDisplaySql('u')} AS name
          FROM reactions r JOIN users u ON u.id = r.user_id
         WHERE r.message_id IN (${placeholders})
         ORDER BY r.emoji`,
@@ -89,10 +90,10 @@ async function mentionsFor(db: D1Database, ids: number[]): Promise<Map<number, U
   const placeholders = ids.map(() => '?').join(',');
   const { results } = await db
     .prepare(
-      `SELECT m.message_id AS messageId, m.user_id AS userId, u.name
+      `SELECT m.message_id AS messageId, m.user_id AS userId, ${userDisplaySql('u')} AS name
          FROM message_mentions m JOIN users u ON u.id = m.user_id
         WHERE m.message_id IN (${placeholders})
-        ORDER BY u.name`,
+        ORDER BY ${userDisplaySql('u')}`,
     )
     .bind(...ids)
     .all<{ messageId: number; userId: number; name: string }>();
@@ -176,12 +177,14 @@ export async function replaceMentions(
   );
 }
 
-export async function listActiveMembers(
-  db: D1Database,
-): Promise<{ id: number; name: string }[]> {
+export async function listActiveMembers(db: D1Database): Promise<Member[]> {
   const { results } = await db
-    .prepare('SELECT id, name FROM users WHERE active = 1 ORDER BY name COLLATE NOCASE')
-    .all<{ id: number; name: string }>();
+    .prepare(
+      `SELECT id, name, visible_name AS visibleName
+         FROM users WHERE active = 1
+         ORDER BY ${userDisplaySql('')} COLLATE NOCASE`,
+    )
+    .all<Member>();
   return results;
 }
 
@@ -189,9 +192,10 @@ export async function listActiveMembers(
 export async function listReads(db: D1Database): Promise<MessageRead[]> {
   const { results } = await db
     .prepare(
-      `SELECT u.id AS userId, u.name, COALESCE(r.last_read_message_id, 0) AS lastReadMessageId
+      `SELECT u.id AS userId, ${userDisplaySql('u')} AS name,
+              COALESCE(r.last_read_message_id, 0) AS lastReadMessageId
          FROM users u LEFT JOIN message_reads r ON r.user_id = u.id
-        WHERE u.active = 1 ORDER BY u.name COLLATE NOCASE`,
+        WHERE u.active = 1 ORDER BY ${userDisplaySql('u')} COLLATE NOCASE`,
     )
     .all<MessageRead>();
   return results;

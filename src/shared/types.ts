@@ -11,7 +11,10 @@ export type NotifyPrefs = {
 
 export type Me = {
   id: number;
+  /** Login / unique handle (invite + password login). */
   name: string;
+  /** Optional public label shown in the UI instead of `name`. */
+  visibleName: string | null;
   role: Role;
   hasPassword: boolean;
   mustSetPassword: boolean;
@@ -20,7 +23,9 @@ export type Me = {
 
 export type Member = {
   id: number;
+  /** Login handle — also accepted in @mentions. */
   name: string;
+  visibleName: string | null;
 };
 
 export type UserRef = { userId: number; name: string };

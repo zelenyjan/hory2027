@@ -1,4 +1,5 @@
 import type { Pin } from '../../shared/types';
+import { userDisplaySql } from './userDisplay';
 
 type PinRow = {
   id: number;
@@ -15,7 +16,7 @@ type PinRow = {
 };
 
 const SELECT_PIN = `
-  SELECT p.id, p.user_id AS userId, u.name AS userName, p.kind, p.title, p.url,
+  SELECT p.id, p.user_id AS userId, ${userDisplaySql('u')} AS userName, p.kind, p.title, p.url,
          p.file_key AS fileKey, p.file_name AS fileName, p.content_type AS contentType,
          p.byte_size AS byteSize, p.created_at AS createdAt
     FROM pins p JOIN users u ON u.id = p.user_id`;

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { NotifyPrefs } from '@shared/types';
+import { displayName } from '@shared/names';
 import { PASSWORD_MIN } from '@shared/schemas';
 import { api } from '../lib/api';
 import { clearAppBadge } from '../lib/badge';
@@ -52,6 +53,8 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [done, setDone] = useState(false);
+  const [visibleName, setVisibleName] = useState(user.visibleName ?? '');
+  const [nameDone, setNameDone] = useState(false);
   const [pushStatus, setPushStatus] = useState<PushStatus>(
     pushSupported() ? 'default' : 'unsupported',
   );
@@ -62,6 +65,8 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   useEffect(() => {
     if (!open) return;
     setNotify(user.notify);
+    setVisibleName(user.visibleName ?? '');
+    setNameDone(false);
     let cancelled = false;
     const refresh = () => {
       void getPushStatus().then((status) => {
@@ -76,7 +81,22 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener('focus', refresh);
     };
-  }, [open, user.notify]);
+  }, [open, user.notify, user.visibleName]);
+
+  const saveProfile = useMutation({
+    mutationFn: () => api.updateProfile(visibleName.trim() || null),
+    onSuccess: (me) => {
+      queryClient.setQueryData(qk.me, me);
+      setVisibleName(me.visibleName ?? '');
+      setNameDone(true);
+      void queryClient.invalidateQueries({ queryKey: qk.members });
+      void queryClient.invalidateQueries({ queryKey: qk.messages });
+      void queryClient.invalidateQueries({ queryKey: qk.reads });
+      void queryClient.invalidateQueries({ queryKey: qk.polls });
+      void queryClient.invalidateQueries({ queryKey: qk.accommodations() });
+      void queryClient.invalidateQueries({ queryKey: qk.pins });
+    },
+  });
 
   const savePassword = useMutation({
     mutationFn: () => api.setPassword(next, current || undefined),
@@ -138,9 +158,43 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   return (
-    <Sheet open={open} title={user.name} onClose={onClose}>
+    <Sheet open={open} title={displayName(user)} onClose={onClose}>
       <div className="space-y-6">
         <section>
+          <h3 className="mb-1 font-medium">Zobrazované jméno</h3>
+          <p className="mb-3 text-sm text-ink-soft">
+            Tak tě uvidí ostatní ve chatu. Přihlášení pořád běží přes{' '}
+            <span className="font-medium text-ink">{user.name}</span>.
+          </p>
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setNameDone(false);
+              saveProfile.mutate();
+            }}
+          >
+            <input
+              className="field"
+              type="text"
+              maxLength={80}
+              autoComplete="nickname"
+              placeholder={user.name}
+              value={visibleName}
+              onChange={(e) => {
+                setVisibleName(e.target.value);
+                setNameDone(false);
+              }}
+            />
+            <ErrorNote error={saveProfile.error} />
+            {nameDone && <p className="text-sm text-good">Jméno uloženo.</p>}
+            <button className="btn-primary w-full" disabled={saveProfile.isPending}>
+              Uložit jméno
+            </button>
+          </form>
+        </section>
+
+        <section className="border-t border-line pt-5">
           <h3 className="mb-2 font-medium">Vzhled</h3>
           <div className="flex gap-1 rounded-xl border border-line/70 bg-surface-2/60 p-1 text-sm">
             {THEMES.map((option) => (

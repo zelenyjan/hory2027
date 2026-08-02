@@ -1,6 +1,11 @@
 import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { loginSchema, notifyPrefsSchema, setPasswordSchema } from '../../shared/schemas';
+import {
+  loginSchema,
+  notifyPrefsSchema,
+  setPasswordSchema,
+  updateProfileSchema,
+} from '../../shared/schemas';
 import type { Me, NotifyPrefs } from '../../shared/types';
 import { hashPassword, sha256Hex, timingSafeEqual, verifyPassword } from '../auth/crypto';
 import { DEFAULT_NOTIFY, prefsFromRow } from '../auth/notify';
@@ -11,6 +16,7 @@ import type { AppEnv, SessionUser } from '../types';
 type UserAuthRow = {
   id: number;
   name: string;
+  visibleName: string | null;
   role: 'admin' | 'member';
   active: number;
   passwordHash: string | null;
@@ -25,6 +31,7 @@ type UserAuthRow = {
 function toMe(user: {
   id: number;
   name: string;
+  visibleName: string | null;
   role: 'admin' | 'member';
   hasPassword: boolean;
   notify: NotifyPrefs;
@@ -59,7 +66,8 @@ export const authRoutes = new Hono<AppEnv>()
   .post('/login', async (c) => {
     const { name, password } = await parseBody(c, loginSchema);
     const user = await c.env.DB.prepare(
-      `SELECT id, name, role, active, password_hash AS passwordHash, password_salt AS passwordSalt,
+      `SELECT id, name, visible_name AS visibleName, role, active,
+              password_hash AS passwordHash, password_salt AS passwordSalt,
               notify_messages AS notifyMessages, notify_mentions AS notifyMentions,
               notify_votes AS notifyVotes, notify_places AS notifyPlaces,
               notify_links AS notifyLinks
@@ -83,6 +91,7 @@ export const authRoutes = new Hono<AppEnv>()
       toMe({
         id: user.id,
         name: user.name,
+        visibleName: user.visibleName,
         role: user.role,
         hasPassword: !bootstrapping,
         notify: prefsFromRow(user),
@@ -101,6 +110,25 @@ export const authRoutes = new Hono<AppEnv>()
     const user = await resolveSession(c);
     if (!user) return c.json({ user: null });
     return c.json({ user: sessionToMe(user) });
+  })
+
+  .patch('/profile', requireAuth, async (c) => {
+    const { visibleName } = await parseBody(c, updateProfileSchema);
+    const me = c.get('user');
+    await c.env.DB.prepare('UPDATE users SET visible_name = ? WHERE id = ?')
+      .bind(visibleName, me.id)
+      .run();
+
+    return c.json(
+      toMe({
+        id: me.id,
+        name: me.name,
+        visibleName,
+        role: me.role,
+        hasPassword: me.hasPassword,
+        notify: me.notify ?? DEFAULT_NOTIFY,
+      }),
+    );
   })
 
   .patch('/notify', requireAuth, async (c) => {
@@ -126,6 +154,7 @@ export const authRoutes = new Hono<AppEnv>()
       toMe({
         id: me.id,
         name: me.name,
+        visibleName: me.visibleName,
         role: me.role,
         hasPassword: me.hasPassword,
         notify: prefs,
@@ -160,6 +189,7 @@ export const authRoutes = new Hono<AppEnv>()
       toMe({
         id: me.id,
         name: me.name,
+        visibleName: me.visibleName,
         role: me.role,
         hasPassword: true,
         notify: me.notify ?? DEFAULT_NOTIFY,

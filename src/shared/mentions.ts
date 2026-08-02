@@ -1,6 +1,8 @@
 /** @Name tokens in chat bodies — names are unique, longest match wins. */
 
-export type MentionMember = { id: number; name: string };
+import { mentionTokens, type Named } from './names';
+
+export type MentionMember = Named & { id: number };
 
 /** Characters that may end a mention (WhatsApp-ish). */
 const AFTER = /[\s,.:;!?)"'\]}]|$/;
@@ -9,21 +11,24 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Find user ids mentioned via @Name in `body`. */
+/** Find user ids mentioned via @login or @visibleName in `body`. */
 export function extractMentionIds(body: string, members: MentionMember[]): number[] {
-  const ordered = [...members].sort((a, b) => b.name.length - a.name.length);
+  const candidates = members
+    .flatMap((member) => mentionTokens(member).map((token) => ({ id: member.id, token })))
+    .sort((a, b) => b.token.length - a.token.length);
+
   const found = new Set<number>();
   const claimed = new Set<number>();
 
-  for (const member of ordered) {
-    if (!member.name) continue;
-    const re = new RegExp(`(^|[\\s([{])@(${escapeRegExp(member.name)})(?=${AFTER.source})`, 'g');
+  for (const { id, token } of candidates) {
+    if (!token) continue;
+    const re = new RegExp(`(^|[\\s([{])@(${escapeRegExp(token)})(?=${AFTER.source})`, 'g');
     let match: RegExpExecArray | null;
     while ((match = re.exec(body)) !== null) {
       const atIndex = match.index + match[1]!.length;
       if (claimed.has(atIndex)) continue;
-      found.add(member.id);
-      for (let i = atIndex; i < atIndex + 1 + member.name.length; i++) claimed.add(i);
+      found.add(id);
+      for (let i = atIndex; i < atIndex + 1 + token.length; i++) claimed.add(i);
     }
   }
 

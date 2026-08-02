@@ -5,6 +5,7 @@ import type {
   Provider,
   UserRef,
 } from '../../shared/types';
+import { userDisplaySql } from './userDisplay';
 
 type AccommodationRow = {
   id: number;
@@ -24,7 +25,7 @@ type AccommodationRow = {
 };
 
 const SELECT_ACCOMMODATION = `
-  SELECT a.id, a.user_id AS userId, u.name AS userName, a.url, a.title,
+  SELECT a.id, a.user_id AS userId, ${userDisplaySql('u')} AS userName, a.url, a.title,
          a.og_title AS ogTitle, a.og_description AS ogDescription, a.og_image_key AS ogImageKey,
          a.provider, a.location,
          a.total_price_czk AS totalPriceCzk, a.comment, a.created_at AS createdAt,
@@ -55,9 +56,9 @@ async function attachRatings(
 
   const { results } = await db
     .prepare(
-      `SELECT r.accommodation_id AS accommodationId, r.user_id AS userId, u.name, r.value
+      `SELECT r.accommodation_id AS accommodationId, r.user_id AS userId, ${userDisplaySql('u')} AS name, r.value
          FROM accommodation_ratings r JOIN users u ON u.id = r.user_id
-        WHERE r.accommodation_id IN (${placeholders}) ORDER BY u.name`,
+        WHERE r.accommodation_id IN (${placeholders}) ORDER BY ${userDisplaySql('u')}`,
     )
     .bind(...ids)
     .all<{ accommodationId: number; userId: number; name: string; value: number }>();
@@ -153,7 +154,8 @@ export async function listComments(
 ): Promise<AccommodationComment[]> {
   const { results } = await db
     .prepare(
-      `SELECT c.id, c.accommodation_id AS accommodationId, c.user_id AS userId, u.name AS userName,
+      `SELECT c.id, c.accommodation_id AS accommodationId, c.user_id AS userId,
+              ${userDisplaySql('u')} AS userName,
               c.body, c.created_at AS createdAt, c.deleted_at AS deletedAt
          FROM accommodation_comments c JOIN users u ON u.id = c.user_id
         WHERE c.accommodation_id = ? ORDER BY c.created_at, c.id`,
@@ -194,10 +196,10 @@ async function commentMentionsFor(
   const placeholders = ids.map(() => '?').join(',');
   const { results } = await db
     .prepare(
-      `SELECT m.comment_id AS commentId, m.user_id AS userId, u.name
+      `SELECT m.comment_id AS commentId, m.user_id AS userId, ${userDisplaySql('u')} AS name
          FROM comment_mentions m JOIN users u ON u.id = m.user_id
         WHERE m.comment_id IN (${placeholders})
-        ORDER BY u.name`,
+        ORDER BY ${userDisplaySql('u')}`,
     )
     .bind(...ids)
     .all<{ commentId: number; userId: number; name: string }>();

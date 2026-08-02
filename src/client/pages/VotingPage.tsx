@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Poll } from '@shared/types';
 import { api } from '../lib/api';
@@ -41,7 +42,7 @@ function PollCard({ poll }: { poll: Poll }) {
   };
 
   return (
-    <article className="card p-4">
+    <article id={`poll-${poll.id}`} className="card scroll-mt-4 p-4">
       <header className="mb-3 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold wrap-anywhere">{poll.question}</h3>
@@ -231,7 +232,25 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
 
 export function VotingPage() {
   const [creating, setCreating] = useState(false);
+  const location = useLocation();
   const polls = useQuery({ queryKey: qk.polls, queryFn: api.polls });
+
+  useEffect(() => {
+    const match = /^#poll-(\d+)$/.exec(location.hash);
+    if (!match || !polls.data) return;
+    const id = match[1]!;
+    const node = document.getElementById(`poll-${id}`);
+    if (!node) return;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    node.animate(
+      [
+        { outline: '2px solid transparent', outlineOffset: '2px' },
+        { outline: '2px solid var(--color-brand)', outlineOffset: '2px' },
+        { outline: '2px solid transparent', outlineOffset: '2px' },
+      ],
+      { duration: 1200 },
+    );
+  }, [location.hash, polls.data]);
 
   return (
     <div className="h-full overflow-y-auto p-4">

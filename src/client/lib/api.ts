@@ -50,6 +50,8 @@ export const api = {
   logout: () => send<{ ok: true }>('POST', '/auth/logout'),
   setPassword: (next: string, current?: string) =>
     send<Me>('POST', '/auth/password', { next, current }),
+  updateProfile: (visibleName: string | null) =>
+    send<Me>('PATCH', '/auth/profile', { visibleName }),
   updateNotify: (notify: NotifyPrefs) => send<Me>('PATCH', '/auth/notify', notify),
   members: () => request<Member[]>('/members'),
 

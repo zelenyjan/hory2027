@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { NavLink, Outlet } from 'react-router-dom';
+import { displayName } from '@shared/names';
 import type { Me } from '@shared/types';
 import { api } from '../lib/api';
 import { setAppBadge } from '../lib/badge';
@@ -65,7 +66,7 @@ export function AppLayout({ user }: { user: Me }) {
             className="rounded-full ring-2 ring-transparent transition hover:ring-brand/40"
             aria-label="Tvůj profil"
           >
-            <Avatar name={user.name} size={36} />
+            <Avatar name={displayName(user)} size={36} />
           </button>
         </header>
 

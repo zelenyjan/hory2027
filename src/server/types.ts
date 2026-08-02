@@ -8,6 +8,7 @@ export type Bindings = Omit<Env, 'TRIP_ROOM'> & {
 export type SessionUser = {
   id: number;
   name: string;
+  visibleName: string | null;
   role: Role;
   hasPassword: boolean;
   notify: NotifyPrefs;

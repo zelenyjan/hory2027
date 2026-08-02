@@ -24,6 +24,19 @@ export const setPasswordSchema = z.object({
   next: z.string().min(PASSWORD_MIN, `Alespoň ${PASSWORD_MIN} znaky`).max(200),
 });
 
+/** Empty / whitespace clears visible_name back to null (login name shows again). */
+export const updateProfileSchema = z.object({
+  visibleName: z
+    .string()
+    .max(80, 'Max. 80 znaků')
+    .nullable()
+    .transform((v) => {
+      if (v == null) return null;
+      const trimmedName = v.trim();
+      return trimmedName.length > 0 ? trimmedName : null;
+    }),
+});
+
 export const createMessageSchema = z.object({
   body: trimmed(MESSAGE_MAX),
   quotedMessageId: z.number().int().positive().nullish(),

@@ -1,7 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { Message, MessageRead } from '@shared/types';
+import { formatBodyPreview } from '@shared/entityTags';
+import { mentionTokens } from '@shared/names';
 import { REACTION_EMOJIS } from '@shared/schemas';
+import { api } from '../../lib/api';
 import { formatTime } from '../../lib/format';
+import { qk } from '../../lib/queries';
 import { useSession } from '../../lib/session';
 import { MentionText } from '../MentionText';
 import { Avatar, Sheet } from '../ui';
@@ -28,9 +33,20 @@ export function MessageBubble({
   onJumpTo,
 }: Props) {
   const me = useSession();
+  const members = useQuery({ queryKey: qk.members, queryFn: api.members });
   const [menuOpen, setMenuOpen] = useState(false);
   const mine = message.userId === me.id;
   const canDelete = mine || me.role === 'admin';
+
+  const mentionNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const mention of message.mentions ?? []) {
+      names.add(mention.name);
+      const member = members.data?.find((m) => m.id === mention.userId);
+      if (member) for (const token of mentionTokens(member)) names.add(token);
+    }
+    return [...names];
+  }, [members.data, message.mentions]);
 
   const others = reads.filter((r) => r.userId !== me.id);
   const readers = others.filter((r) => r.lastReadMessageId >= message.id);
@@ -86,7 +102,9 @@ export function MessageBubble({
             >
               <span className="block font-medium">{message.quoted.userName}</span>
               <span className="line-clamp-2 opacity-80">
-                {message.quoted.deleted ? 'zpráva smazána' : message.quoted.body}
+                {message.quoted.deleted
+                  ? 'zpráva smazána'
+                  : formatBodyPreview(message.quoted.body)}
               </span>
             </span>
           )}
@@ -96,7 +114,7 @@ export function MessageBubble({
           ) : (
             <MentionText
               text={message.body}
-              mentionNames={(message.mentions ?? []).map((m) => m.name)}
+              mentionNames={mentionNames}
               accent={mine ? 'on-brand' : 'brand'}
             />
           )}

@@ -2,6 +2,7 @@ import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { emojify } from '../../shared/emoticons';
 import { extractMentionIds } from '../../shared/mentions';
+import { displayName } from '../../shared/names';
 import {
   createMessageSchema,
   markReadSchema,
@@ -65,7 +66,7 @@ export const messageRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: user.name,
+        title: displayName(user),
         body: preview(message.body),
         url: '/',
         tag: 'chat',
@@ -85,7 +86,7 @@ export const messageRoutes = new Hono<AppEnv>()
     const lastReadMessageId = await markRead(c.env.DB, user.id, messageId);
     broadcast(c, {
       type: 'message.read',
-      payload: { userId: user.id, name: user.name, lastReadMessageId },
+      payload: { userId: user.id, name: displayName(user), lastReadMessageId },
     });
     return c.json({ lastReadMessageId });
   })
@@ -159,7 +160,13 @@ export const messageRoutes = new Hono<AppEnv>()
 
     broadcast(c, {
       type: 'reaction.toggled',
-      payload: { messageId: id, userId: user.id, userName: user.name, emoji, added: !existing },
+      payload: {
+        messageId: id,
+        userId: user.id,
+        userName: displayName(user),
+        emoji,
+        added: !existing,
+      },
     });
     return c.json({ added: !existing });
   });

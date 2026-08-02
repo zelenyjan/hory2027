@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { mentionTokens } from '@shared/names';
 import { COMMENT_MAX } from '@shared/schemas';
 import { api } from '../lib/api';
 import { formatRelative } from '../lib/format';
@@ -167,7 +168,16 @@ export function PlaceDetailPage() {
                 ) : (
                   <MentionText
                     text={comment.body}
-                    mentionNames={(comment.mentions ?? []).map((m) => m.name)}
+                    mentionNames={[
+                      ...new Set(
+                        (comment.mentions ?? []).flatMap((mention) => {
+                          const member = members.data?.find((m) => m.id === mention.userId);
+                          return member
+                            ? mentionTokens(member)
+                            : [mention.name];
+                        }),
+                      ),
+                    ]}
                   />
                 )}
               </p>
@@ -188,7 +198,7 @@ export function PlaceDetailPage() {
       )}
 
       <form
-        className="mt-4 flex items-end gap-2"
+        className="mt-4 flex items-stretch gap-2"
         onSubmit={(e) => {
           e.preventDefault();
           if (draft.trim()) addComment.mutate();
@@ -205,7 +215,11 @@ export function PlaceDetailPage() {
             if (draft.trim()) addComment.mutate();
           }}
         />
-        <button className="btn-primary h-11 px-4" disabled={!draft.trim() || addComment.isPending}>
+        <button
+          type="submit"
+          className="btn-primary shrink-0 self-stretch px-4 py-0"
+          disabled={!draft.trim() || addComment.isPending}
+        >
           Odeslat
         </button>
       </form>

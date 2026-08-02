@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { displayName } from '../../shared/names';
 import { createPinLinkSchema, PIN_FILE_MAX_BYTES, TITLE_MAX } from '../../shared/schemas';
 import { getPin, getPinStorage, listPins } from '../db/pins';
 import { broadcast, intParam, parseBody } from '../middleware';
@@ -35,7 +36,7 @@ export const pinRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: `${user.name}: nový odkaz`,
+        title: `${displayName(user)}: nový odkaz`,
         body: preview(title),
         url: '/links',
         tag: `pin-${pin.id}`,
@@ -102,7 +103,7 @@ export const pinRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: `${user.name}: nový soubor`,
+        title: `${displayName(user)}: nový soubor`,
         body: preview(titleRaw),
         url: '/links',
         tag: `pin-${pin.id}`,

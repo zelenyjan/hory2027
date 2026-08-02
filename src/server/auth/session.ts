@@ -47,7 +47,8 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
   const idHash = await hmacSha256Hex(c.env.SESSION_SECRET, token);
   const row = await c.env.DB.prepare(
     `SELECT s.id_hash AS idHash, s.expires_at AS expiresAt,
-            u.id, u.name, u.role, u.active, u.password_hash AS passwordHash,
+            u.id, u.name, u.visible_name AS visibleName, u.role, u.active,
+            u.password_hash AS passwordHash,
             u.notify_messages AS notifyMessages, u.notify_mentions AS notifyMentions,
             u.notify_votes AS notifyVotes, u.notify_places AS notifyPlaces,
             u.notify_links AS notifyLinks
@@ -60,6 +61,7 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
       expiresAt: string;
       id: number;
       name: string;
+      visibleName: string | null;
       role: 'admin' | 'member';
       active: number;
       passwordHash: string | null;
@@ -92,6 +94,7 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
   return {
     id: row.id,
     name: row.name,
+    visibleName: row.visibleName,
     role: row.role,
     hasPassword: row.passwordHash !== null,
     notify: prefsFromRow(row),

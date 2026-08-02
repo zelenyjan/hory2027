@@ -1,4 +1,5 @@
 import type { Poll } from '../../shared/types';
+import { userDisplaySql } from './userDisplay';
 
 type PollRow = {
   id: number;
@@ -11,7 +12,7 @@ type PollRow = {
 };
 
 const SELECT_POLL = `
-  SELECT p.id, p.creator_id AS creatorId, u.name AS creatorName, p.question,
+  SELECT p.id, p.creator_id AS creatorId, ${userDisplaySql('u')} AS creatorName, p.question,
          p.multi_choice AS multiChoice, p.closed_at AS closedAt, p.created_at AS createdAt
     FROM polls p JOIN users u ON u.id = p.creator_id`;
 
@@ -32,9 +33,9 @@ async function attachOptions(db: D1Database, rows: PollRow[]): Promise<Poll[]> {
       .bind(...ids),
     db
       .prepare(
-        `SELECT v.option_id AS optionId, v.user_id AS userId, u.name
+        `SELECT v.option_id AS optionId, v.user_id AS userId, ${userDisplaySql('u')} AS name
            FROM poll_votes v JOIN users u ON u.id = v.user_id
-          WHERE v.poll_id IN (${placeholders}) ORDER BY u.name`,
+          WHERE v.poll_id IN (${placeholders}) ORDER BY ${userDisplaySql('u')}`,
       )
       .bind(...ids),
   ])) as [D1Result<OptionRow>, D1Result<VoteRow>];

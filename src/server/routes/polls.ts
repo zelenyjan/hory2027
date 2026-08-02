@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { displayName } from '../../shared/names';
 import { createPollSchema, votePollSchema } from '../../shared/schemas';
 import { getPoll, listPolls } from '../db/polls';
 import { broadcast, intParam, parseBody } from '../middleware';
@@ -32,7 +33,7 @@ export const pollRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: `${user.name}: nová anketa`,
+        title: `${displayName(user)}: nová anketa`,
         body: preview(question),
         url: '/voting',
         tag: `poll-${poll!.id}`,
@@ -78,7 +79,7 @@ export const pollRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: `${user.name}: nový hlas`,
+        title: `${displayName(user)}: nový hlas`,
         body: preview(poll.question),
         url: '/voting',
         tag: `poll-vote-${pollId}`,

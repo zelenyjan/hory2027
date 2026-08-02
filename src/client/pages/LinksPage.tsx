@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Pin } from '@shared/types';
 import { PIN_FILE_MAX_BYTES, TITLE_MAX } from '@shared/schemas';
@@ -27,7 +28,7 @@ function PinRow({ pin }: { pin: Pin }) {
   const href = pin.kind === 'link' ? pin.url! : `/api/pins/${pin.id}/file`;
 
   return (
-    <li className="card flex items-start gap-3 p-3.5">
+    <li id={`pin-${pin.id}`} className="card flex scroll-mt-4 items-start gap-3 p-3.5">
       <span
         aria-hidden
         className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-lg"
@@ -212,7 +213,24 @@ function AddPinSheet({ open, onClose }: { open: boolean; onClose: () => void }) 
 
 export function LinksPage() {
   const [adding, setAdding] = useState(false);
+  const location = useLocation();
   const pins = useQuery({ queryKey: qk.pins, queryFn: api.pins });
+
+  useEffect(() => {
+    const match = /^#pin-(\d+)$/.exec(location.hash);
+    if (!match || !pins.data) return;
+    const node = document.getElementById(`pin-${match[1]!}`);
+    if (!node) return;
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    node.animate(
+      [
+        { outline: '2px solid transparent', outlineOffset: '2px' },
+        { outline: '2px solid var(--color-brand)', outlineOffset: '2px' },
+        { outline: '2px solid transparent', outlineOffset: '2px' },
+      ],
+      { duration: 1200 },
+    );
+  }, [location.hash, pins.data]);
 
   return (
     <div className="h-full overflow-y-auto p-4">

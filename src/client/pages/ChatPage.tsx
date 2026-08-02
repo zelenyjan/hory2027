@@ -6,6 +6,7 @@ import { clearAppBadge } from '../lib/badge';
 import { qk } from '../lib/queries';
 import { formatDay, parseSqlDate } from '../lib/format';
 import { useSession } from '../lib/session';
+import { formatBodyPreview } from '@shared/entityTags';
 import { MentionComposer } from '../components/chat/MentionComposer';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ErrorNote, Spinner } from '../components/ui';
@@ -30,6 +31,12 @@ export function ChatPage() {
 
   const reads = useQuery({ queryKey: qk.reads, queryFn: api.reads });
   const members = useQuery({ queryKey: qk.members, queryFn: api.members });
+  const polls = useQuery({ queryKey: qk.polls, queryFn: api.polls });
+  const places = useQuery({
+    queryKey: qk.accommodations(),
+    queryFn: () => api.accommodations(),
+  });
+  const pins = useQuery({ queryKey: qk.pins, queryFn: api.pins });
 
   // Pages arrive newest-first; flip them so the oldest sits at the top of the scroller.
   const messages = feed.data ? [...feed.data.pages].reverse().flatMap((p) => p.messages) : [];
@@ -197,7 +204,9 @@ export function ChatPage() {
               <p className="font-medium">
                 {editing ? 'Upravuješ svou zprávu' : `Odpověď pro ${replyTo!.userName}`}
               </p>
-              <p className="truncate text-ink-soft">{(editing ?? replyTo)!.body}</p>
+              <p className="truncate text-ink-soft">
+                {formatBodyPreview((editing ?? replyTo)!.body)}
+              </p>
             </div>
             <button type="button" className="text-ink-soft" onClick={cancelComposerContext}>
               ✕
@@ -205,13 +214,16 @@ export function ChatPage() {
           </div>
         )}
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-stretch gap-2">
           <MentionComposer
             value={draft}
             onChange={setDraft}
             members={members.data ?? []}
             selfId={me.id}
-            placeholder="Napiš do skupiny… (@jméno)"
+            polls={polls.data ?? []}
+            places={places.data ?? []}
+            pins={pins.data ?? []}
+            placeholder="Napiš… (@ nebo #)"
             onSubmit={() => {
               if (!draft.trim()) return;
               if (editing) editMessage.mutate();
@@ -219,7 +231,8 @@ export function ChatPage() {
             }}
           />
           <button
-            className="btn-primary h-11 px-4"
+            type="submit"
+            className="btn-primary shrink-0 self-stretch px-4 py-0"
             disabled={!draft.trim() || sendMessage.isPending || editMessage.isPending}
           >
             {editing ? 'Uložit' : 'Odeslat'}

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { emojify } from '../../shared/emoticons';
 import { extractMentionIds } from '../../shared/mentions';
+import { displayName } from '../../shared/names';
 import {
   createAccommodationSchema,
   createCommentSchema,
@@ -76,7 +77,7 @@ export const accommodationRoutes = new Hono<AppEnv>()
       c,
       user.id,
       {
-        title: `${user.name}: nové místo`,
+        title: `${displayName(user)}: nové místo`,
         body: preview([place.title ?? place.ogTitle, place.location].filter(Boolean).join(' · ')),
         url: `/places/${place.id}`,
         tag: `place-${place.id}`,
@@ -185,7 +186,7 @@ export const accommodationRoutes = new Hono<AppEnv>()
         c,
         user.id,
         {
-          title: user.name,
+          title: displayName(user),
           body: preview(text),
           url: `/places/${accommodationId}`,
           tag: `comment-${row!.id}`,
