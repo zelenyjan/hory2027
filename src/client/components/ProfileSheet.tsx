@@ -22,8 +22,8 @@ import { ErrorNote, Sheet } from './ui';
 const NOTIFY_OPTIONS: { key: keyof NotifyPrefs; label: string; hint: string }[] = [
   { key: 'messages', label: 'Zprávy', hint: 'nové zprávy ve chatu' },
   { key: 'mentions', label: 'Zmínky (@)', hint: 'když tě někdo označí' },
-  { key: 'votes', label: 'Hlasování', hint: 'nové ankety a hlasy' },
-  { key: 'places', label: 'Místa', hint: 'nové ubytování' },
+  { key: 'votes', label: 'Ankety', hint: 'nové ankety a hlasy' },
+  { key: 'places', label: 'Ubytování', hint: 'nová ubytování' },
   { key: 'links', label: 'Odkazy', hint: 'připnuté weby a soubory' },
 ];
 

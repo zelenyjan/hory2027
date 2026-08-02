@@ -66,7 +66,7 @@ export function AboutPage() {
           </span>
           <h1 className="gradient-text text-3xl font-bold tracking-tight">Hory 2027</h1>
           <p className="mt-2 text-ink-soft">
-            Soukromá appka na plánování lyžařského výletu — chat, hlasování a seznam ubytování na
+            Soukromá appka na plánování lyžařského výletu — chat, ankety a seznam ubytování na
             jednom místě.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -174,12 +174,12 @@ export function AboutPage() {
               odpovědi, @zmínky a přečtení zpráv (fajfky).
             </li>
             <li>
-              <strong className="font-medium text-ink">Hlasování</strong> — ankety mimo chat. Hlasy
+              <strong className="font-medium text-ink">Ankety</strong> — hlasování mimo chat. Hlasy
               jsou v partě vidět se jmény.
             </li>
             <li>
-              <strong className="font-medium text-ink">Místa</strong> — seznam ubytování s cenou v
-              Kč, palci nahoru/dolů a komentáři u každého místa.
+              <strong className="font-medium text-ink">Ubytování</strong> — seznam s cenou v Kč,
+              palci nahoru/dolů a komentáři u každé nabídky.
             </li>
             <li>
               <strong className="font-medium text-ink">Odkazy</strong> — důležité weby a soubory
@@ -207,24 +207,24 @@ export function AboutPage() {
           </p>
         </Section>
 
-        <Section title="Jak používat Hlasování">
+        <Section title="Jak používat Ankety">
           <p>
-            V záložce Hlasování založíš anketu s otázkou a 2–10 možnostmi. Můžeš zvolit jednu nebo
-            více odpovědí. Hlasy jde měnit, dokud někdo anketu neuzavře. Výsledky jsou hned vidět —
+            V záložce Ankety založíš anketu s otázkou a 2–10 možnostmi. Můžeš zvolit jednu nebo více
+            odpovědí. Hlasy jde měnit, dokud někdo anketu neuzavře. Výsledky jsou hned vidět —
             včetně toho, kdo co zvolil.
           </p>
         </Section>
 
-        <Section title="Jak používat Místa">
+        <Section title="Jak používat Ubytování">
           <p>
             Přidej ubytování tlačítkem „Přidat místo“: odkaz (Booking, Airbnb, …), celkovou cenu v
             Kč, lokalitu a volitelně vlastní název a poznámku. Název, popis a fotku zkusíme načíst
             z odkazu automaticky (Booking a Airbnb to často blokují).
           </p>
           <p>
-            U každého místa dej palec nahoru nebo dolů, filtruj podle lokality a seřaď podle skóre,
-            ceny nebo data. Tlačítko Detail otevře stránku místa — uvidíš kdo hlasoval a jak, plus
-            diskuzi (v komentářích můžeš stejně jako v chatu označit lidi přes @).
+            U každé nabídky dej palec nahoru nebo dolů, filtruj podle lokality a seřaď podle skóre,
+            ceny nebo data. Tlačítko Detail otevře stránku ubytování — uvidíš kdo hlasoval a jak,
+            plus diskuzi (v komentářích můžeš stejně jako v chatu označit lidi přes @).
           </p>
         </Section>
 
@@ -260,7 +260,8 @@ export function AboutPage() {
             <Step n={2}>V appce klepni na svůj avatar vpravo nahoře.</Step>
             <Step n={3}>V sekci Oznámení zvol „Zapnout oznámení“ a povol je v systémovém dialogu.</Step>
             <Step n={4}>
-              Zaškrtni, co chceš dostávat (zprávy, zmínky, hlasy, místa, odkazy) — nebo „Jen zmínky“.
+              Zaškrtni, co chceš dostávat (zprávy, zmínky, ankety, ubytování, odkazy) — nebo „Jen
+              zmínky“.
             </Step>
             <Step n={5}>Volitelně pošli „Zkušební oznámení“, ať víš, že to funguje.</Step>
           </ol>
@@ -273,7 +274,7 @@ export function AboutPage() {
         <Section title="Soukromí">
           <p>
             Nic z appky není veřejné. Bez přihlášení (nebo platného invite odkazu) neuvidíš chat,
-            hlasování ani místa. Tahle stránka O aplikaci je jediná veřejná.
+            ankety ani ubytování. Tahle stránka O aplikaci je jediná veřejná.
           </p>
         </Section>
 

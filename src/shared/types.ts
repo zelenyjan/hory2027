@@ -140,3 +140,10 @@ export type AdminUser = {
   lastSeenAt: string | null;
   createdAt: string;
 };
+
+/** Free-text trip roster entry (need not match a user account). */
+export type Attendee = {
+  id: number;
+  name: string;
+  position: number;
+};

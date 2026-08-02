@@ -21,8 +21,8 @@
     }
   ],
   "shortcuts": [
-    { "name": "Hlasování", "url": "/voting" },
-    { "name": "Místa", "url": "/places" },
+    { "name": "Ankety", "url": "/voting" },
+    { "name": "Ubytování", "url": "/places" },
     { "name": "Odkazy", "url": "/links" }
   ]
 }

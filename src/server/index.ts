@@ -8,6 +8,7 @@ import { accommodationRoutes, commentRoutes } from './routes/accommodations';
 import { adminRoutes } from './routes/admin';
 import { memberRoutes } from './routes/members';
 import { pinRoutes } from './routes/pins';
+import { attendeeRoutes } from './routes/attendees';
 import { pushRoutes } from './routes/push';
 import { limitLogins, limitWrites, requireAdmin, requireAuth } from './middleware';
 import { resolveSession } from './auth/session';
@@ -43,6 +44,8 @@ const api = new Hono<AppEnv>()
   .use('/comments/*', requireAuth, limitWrites)
   .use('/pins', requireAuth, limitWrites)
   .use('/pins/*', requireAuth, limitWrites)
+  .use('/attendees', requireAuth, limitWrites)
+  .use('/attendees/*', requireAuth, limitWrites)
   .use('/members', requireAuth)
   .use('/members/*', requireAuth)
   .use('/push/*', requireAuth, limitWrites)
@@ -52,6 +55,7 @@ const api = new Hono<AppEnv>()
   .route('/accommodations', accommodationRoutes)
   .route('/comments', commentRoutes)
   .route('/pins', pinRoutes)
+  .route('/attendees', attendeeRoutes)
   .route('/members', memberRoutes)
   .route('/push', pushRoutes)
   .route('/admin', adminRoutes);

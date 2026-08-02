@@ -255,7 +255,7 @@ export function VotingPage() {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="gradient-text text-xl font-bold tracking-tight">Hlasování</h2>
+        <h2 className="gradient-text text-xl font-bold tracking-tight">Ankety</h2>
         <button className="btn-primary py-2" onClick={() => setCreating(true)}>
           Nová anketa
         </button>

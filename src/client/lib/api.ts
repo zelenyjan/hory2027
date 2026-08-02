@@ -9,6 +9,7 @@ import type {
   MessagePage,
   MessageRead,
   NotifyPrefs,
+  Attendee,
   Pin,
   Poll,
 } from '@shared/types';
@@ -113,6 +114,13 @@ export const api = {
     return request<Pin>('/pins/file', { method: 'POST', body });
   },
   deletePin: (id: number) => send<{ ok: true }>('DELETE', `/pins/${id}`),
+
+  attendees: () => request<Attendee[]>('/attendees'),
+  createAttendee: (name: string) => send<Attendee>('POST', '/attendees', { name }),
+  updateAttendee: (id: number, name: string) =>
+    send<Attendee>('PATCH', `/attendees/${id}`, { name }),
+  reorderAttendees: (ids: number[]) => send<Attendee[]>('PUT', '/attendees/reorder', { ids }),
+  deleteAttendee: (id: number) => send<{ ok: true }>('DELETE', `/attendees/${id}`),
 
   adminUsers: () => request<AdminUser[]>('/admin/users'),
   createUser: (name: string) =>

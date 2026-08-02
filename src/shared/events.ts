@@ -27,4 +27,5 @@ export type TripEvent =
   | { type: 'comment.deleted'; payload: { accommodationId: number } }
   | { type: 'pin.created'; payload: { id: number } }
   | { type: 'pin.deleted'; payload: { id: number } }
+  | { type: 'attendees.changed'; payload: Record<string, never> }
   | { type: 'presence'; payload: { online: number } };

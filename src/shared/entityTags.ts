@@ -16,7 +16,7 @@ const ENTITY_RE = /\[\[(anketa|misto|odkaz):(\d+)\|([^\]]+)\]\]/g;
 
 const ENTITY_LABEL: Record<EntityKind, string> = {
   anketa: 'Anketa',
-  misto: 'Místo',
+  misto: 'Ubytování',
   odkaz: 'Odkaz',
 };
 

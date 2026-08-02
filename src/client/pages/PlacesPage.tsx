@@ -52,7 +52,7 @@ export function PlacesPage() {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="gradient-text text-xl font-bold tracking-tight">Místa</h2>
+        <h2 className="gradient-text text-xl font-bold tracking-tight">Ubytování</h2>
         <button className="btn-primary py-2" onClick={() => setAdding(true)}>
           Přidat místo
         </button>
@@ -96,7 +96,7 @@ export function PlacesPage() {
       )}
       {places.data?.length === 0 && (
         <EmptyState
-          title={location ? `V ${location} zatím nic není` : 'Zatím žádná místa'}
+          title={location ? `V ${location} zatím nic není` : 'Zatím žádné ubytování'}
           hint="Vlož odkaz z Bookingu nebo Airbnb a celkovou cenu."
         />
       )}

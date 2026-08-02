@@ -9,6 +9,7 @@ export const qk = {
   locations: ['locations'] as const,
   comments: (id: number) => ['comments', id] as const,
   pins: ['pins'] as const,
+  attendees: ['attendees'] as const,
   members: ['members'] as const,
   adminUsers: ['admin', 'users'] as const,
 };

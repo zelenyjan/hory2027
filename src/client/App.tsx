@@ -9,6 +9,7 @@ import { VotingPage } from './pages/VotingPage';
 import { PlacesPage } from './pages/PlacesPage';
 import { PlaceDetailPage } from './pages/PlaceDetailPage';
 import { LinksPage } from './pages/LinksPage';
+import { RosterPage } from './pages/RosterPage';
 import { AdminPage } from './pages/AdminPage';
 import { Spinner } from './components/ui';
 
@@ -45,6 +46,7 @@ export function App() {
         <Route path="/places" element={<PlacesPage />} />
         <Route path="/places/:id" element={<PlaceDetailPage />} />
         <Route path="/links" element={<LinksPage />} />
+        <Route path="/roster" element={<RosterPage />} />
         <Route
           path="/admin"
           element={user.role === 'admin' ? <AdminPage /> : <Navigate to="/" replace />}

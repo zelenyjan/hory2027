@@ -14,9 +14,10 @@ import { Avatar } from './ui';
 
 const TABS = [
   { to: '/', label: 'Chat', icon: '💬', end: true },
-  { to: '/voting', label: 'Hlasování', icon: '🗳️', end: false },
-  { to: '/places', label: 'Místa', icon: '🏔️', end: false },
+  { to: '/voting', label: 'Ankety', icon: '🗳️', end: false },
+  { to: '/places', label: 'Ubytování', icon: '🏔️', end: false },
   { to: '/links', label: 'Odkazy', icon: '🔗', end: false },
+  { to: '/roster', label: 'Kdo jede', icon: '🎿', end: false },
 ];
 
 export function AppLayout({ user }: { user: Me }) {

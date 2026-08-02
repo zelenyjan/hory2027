@@ -101,6 +101,12 @@ export const notifyPrefsSchema = z.object({
   links: z.boolean(),
 });
 
+export const createAttendeeSchema = z.object({ name: trimmed(80) });
+export const updateAttendeeSchema = z.object({ name: trimmed(80) });
+export const reorderAttendeesSchema = z.object({
+  ids: z.array(z.number().int().positive()).max(200),
+});
+
 export const createUserSchema = z.object({ name: trimmed(80) });
 
 export const updateUserSchema = z

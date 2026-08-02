@@ -55,7 +55,7 @@ export function PlaceDetailPage() {
       <div className="p-6 text-center">
         <p className="text-ink-soft">Toto místo už neexistuje.</p>
         <Link to="/places" className="mt-4 btn-ghost">
-          Zpět na Místa
+          Zpět na Ubytování
         </Link>
       </div>
     );
@@ -68,7 +68,7 @@ export function PlaceDetailPage() {
   return (
     <div className="h-full overflow-y-auto p-4">
       <button className="mb-3 btn-ghost px-3 py-1.5 text-sm" onClick={() => navigate('/places')}>
-        ← Místa
+        ← Ubytování
       </button>
 
       {place.isPending && (

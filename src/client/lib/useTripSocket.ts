@@ -181,6 +181,9 @@ export function useTripSocket(enabled: boolean): { online: number; connected: bo
         case 'pin.deleted':
           void queryClient.invalidateQueries({ queryKey: qk.pins });
           break;
+        case 'attendees.changed':
+          void queryClient.invalidateQueries({ queryKey: qk.attendees });
+          break;
         case 'presence':
           setOnline(event.payload.online);
           break;

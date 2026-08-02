@@ -198,7 +198,7 @@ export function MentionComposer({
                 {item.kind === 'place' && (
                   <>
                     <span className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
-                      Místo
+                      Ubytování
                     </span>
                     <span className="font-medium">
                       {placeLabel(item.place)}
