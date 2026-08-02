@@ -64,7 +64,7 @@ export const adminRoutes = new Hono<AppEnv>()
     const clash = await c.env.DB.prepare('SELECT 1 FROM users WHERE name = ? COLLATE NOCASE')
       .bind(name)
       .first();
-    if (clash) throw new HTTPException(409, { message: 'That name is taken' });
+    if (clash) throw new HTTPException(409, { message: 'Tohle jméno už někdo má' });
 
     const row = await c.env.DB.prepare('INSERT INTO users (name) VALUES (?) RETURNING id')
       .bind(name)
@@ -78,9 +78,9 @@ export const adminRoutes = new Hono<AppEnv>()
     const user = await c.env.DB.prepare('SELECT role FROM users WHERE id = ?')
       .bind(id)
       .first<{ role: string }>();
-    if (!user) throw new HTTPException(404, { message: 'User not found' });
+    if (!user) throw new HTTPException(404, { message: 'Uživatel nenalezen' });
     if (user.role === 'admin')
-      throw new HTTPException(400, { message: 'Admin has no invite link' });
+      throw new HTTPException(400, { message: 'Admin nemá pozvánkový odkaz' });
 
     return c.json({ inviteUrl: await issueInvite(c, id) });
   })
@@ -97,9 +97,9 @@ export const adminRoutes = new Hono<AppEnv>()
     const target = await c.env.DB.prepare('SELECT role FROM users WHERE id = ?')
       .bind(id)
       .first<{ role: string }>();
-    if (!target) throw new HTTPException(404, { message: 'User not found' });
+    if (!target) throw new HTTPException(404, { message: 'Uživatel nenalezen' });
     if (target.role === 'admin' && patch.active === false) {
-      throw new HTTPException(400, { message: 'Cannot deactivate the admin' });
+      throw new HTTPException(400, { message: 'Admina nelze deaktivovat' });
     }
 
     if (patch.name !== undefined) {
@@ -108,7 +108,7 @@ export const adminRoutes = new Hono<AppEnv>()
       )
         .bind(patch.name, id)
         .first();
-      if (clash) throw new HTTPException(409, { message: 'That name is taken' });
+      if (clash) throw new HTTPException(409, { message: 'Tohle jméno už někdo má' });
       await c.env.DB.prepare('UPDATE users SET name = ? WHERE id = ?').bind(patch.name, id).run();
     }
 

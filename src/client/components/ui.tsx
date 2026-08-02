@@ -5,7 +5,7 @@ export function Spinner({ className = '' }: { className?: string }) {
   return (
     <span
       role="status"
-      aria-label="Loading"
+      aria-label="Načítání"
       className={`inline-block size-5 animate-spin rounded-full border-2 border-line border-t-brand ${className}`}
     />
   );
@@ -36,7 +36,7 @@ export function Avatar({ name, size = 36 }: { name: string; size?: number }) {
 
 export function ErrorNote({ error }: { error: unknown }) {
   if (!error) return null;
-  const message = error instanceof Error ? error.message : 'Something went wrong';
+  const message = error instanceof Error ? error.message : 'Něco se pokazilo';
   return (
     <p role="alert" className="text-sm text-bad">
       {message}
@@ -78,7 +78,7 @@ export function Sheet({
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
       <button
-        aria-label="Close"
+        aria-label="Zavřít"
         className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
         onClick={onClose}
       />
@@ -91,7 +91,7 @@ export function Sheet({
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">{title}</h2>
           <button className="btn-ghost px-3 py-1.5" onClick={onClose}>
-            Close
+            Zavřít
           </button>
         </div>
         {children}

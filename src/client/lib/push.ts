@@ -39,21 +39,23 @@ export function isAppleTouchDevice(): boolean {
 export function isStandaloneDisplay(): boolean {
   if (typeof window === 'undefined') return false;
   const media = window.matchMedia('(display-mode: standalone)').matches;
-  const legacy = 'standalone' in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+  const legacy =
+    'standalone' in navigator &&
+    Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
   return media || legacy;
 }
 
 export function deniedHelpText(): string {
   if (isAppleTouchDevice()) {
     return [
-      'iOS blocked notifications for this app.',
-      'Open Settings → Notifications → Hory, turn Allow Notifications on.',
-      'If Hory is not listed, delete the Home Screen icon and add the site again (Share → Add to Home Screen), then open it from there and retry.',
+      'iOS má pro tuto appku oznámení vypnutá.',
+      'Otevři Nastavení → Oznámení → Hory a zapni „Povolit oznámení“.',
+      'Pokud Hory v seznamu nejsou, smaž ikonu z plochy, přidej web znovu (Sdílet → Přidat na plochu), otevři ho z ikony a zkus to znovu.',
     ].join(' ');
   }
   return [
-    'Notifications are blocked for this site.',
-    'Click the lock / tune icon in the address bar → Site settings → Notifications → Allow, then try again.',
+    'Oznámení jsou pro tento web zablokovaná.',
+    'Klikni na ikonu zámku / nastavení u adresy → Nastavení webu → Oznámení → Povolit a zkus to znovu.',
   ].join(' ');
 }
 
@@ -123,7 +125,7 @@ export async function enablePush(): Promise<PushStatus> {
 
   const json = subscription.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) {
-    throw new Error('Push subscription incomplete');
+    throw new Error('Odběr oznámení je neúplný');
   }
 
   await api.pushSubscribe({

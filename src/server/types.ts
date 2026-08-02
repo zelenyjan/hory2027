@@ -1,4 +1,4 @@
-import type { Role } from '../shared/types';
+import type { NotifyPrefs, Role } from '../shared/types';
 import type { TripRoom } from './do/TripRoom';
 
 export type Bindings = Omit<Env, 'TRIP_ROOM'> & {
@@ -10,6 +10,7 @@ export type SessionUser = {
   name: string;
   role: Role;
   hasPassword: boolean;
+  notify: NotifyPrefs;
 };
 
 export type AppEnv = {

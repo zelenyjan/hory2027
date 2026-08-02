@@ -58,7 +58,8 @@ pnpm seed                          # optional: demo users, messages, a poll and 
 
 Sign in with the admin name seeded by `migrations/0001_init.sql` (currently `green`) and the
 `ADMIN_INITIAL_PASSWORD` from `.dev.vars`. The app immediately asks you
-to choose a real password; after that the bootstrap value stops being accepted. Add the rest of the
+to choose a real password (min. 4 characters); after that the bootstrap value stops being accepted.
+Members can also set an optional password in their profile (same minimum). Add the rest of the
 group in the **Admin** tab — each person gets a one-time-displayed invite link that doubles as their
 permanent passwordless login.
 
@@ -105,7 +106,7 @@ Later deploys are just `pnpm run deploy` (plus `pnpm db:migrate:remote` when a m
 - Nothing is public: every API route and every SPA route requires a session.
 - Invite tokens are 256-bit random values, stored only as SHA-256 hashes, revocable and regenerable.
 - Passwords use PBKDF2-SHA256 (100k iterations — the Workers maximum — per-user salt) via WebCrypto,
-  compared in constant time.
+  compared in constant time. Minimum length is 4 characters (private friend-group app).
 - Sessions live in D1 behind an `HttpOnly; Secure; SameSite=Lax` cookie, 90 days sliding, so
   deactivating a user instantly kills their access.
 - Writes are same-origin only (Hono CSRF plus an explicit Origin check) and rate limited per user in

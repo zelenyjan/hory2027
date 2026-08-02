@@ -1,12 +1,26 @@
 export type Role = 'admin' | 'member';
 export type Provider = 'booking' | 'airbnb' | 'other';
 
+export type NotifyPrefs = {
+  messages: boolean;
+  mentions: boolean;
+  votes: boolean;
+  places: boolean;
+  links: boolean;
+};
+
 export type Me = {
   id: number;
   name: string;
   role: Role;
   hasPassword: boolean;
   mustSetPassword: boolean;
+  notify: NotifyPrefs;
+};
+
+export type Member = {
+  id: number;
+  name: string;
 };
 
 export type UserRef = { userId: number; name: string };
@@ -29,6 +43,7 @@ export type Message = {
   editedAt: string | null;
   deleted: boolean;
   reactions: { emoji: string; users: UserRef[] }[];
+  mentions: UserRef[];
 };
 
 export type MessagePage = {
@@ -67,6 +82,10 @@ export type Accommodation = {
   userName: string;
   url: string;
   title: string | null;
+  /** Scraped Open Graph fields — filled asynchronously after create; readonly in the UI. */
+  ogTitle: string | null;
+  ogDescription: string | null;
+  hasOgImage: boolean;
   provider: Provider;
   location: string;
   totalPriceCzk: number;
@@ -81,6 +100,19 @@ export type Accommodation = {
 
 export type LocationCount = { location: string; count: number };
 
+export type Pin = {
+  id: number;
+  userId: number;
+  userName: string;
+  kind: 'link' | 'file';
+  title: string;
+  url: string | null;
+  fileName: string | null;
+  contentType: string | null;
+  byteSize: number | null;
+  createdAt: string;
+};
+
 export type AccommodationComment = {
   id: number;
   accommodationId: number;
@@ -89,6 +121,7 @@ export type AccommodationComment = {
   body: string;
   createdAt: string;
   deleted: boolean;
+  mentions: UserRef[];
 };
 
 export type AdminUser = {

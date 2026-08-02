@@ -3,10 +3,16 @@ import { z } from 'zod';
 export const MESSAGE_MAX = 4000;
 export const COMMENT_MAX = 2000;
 export const TITLE_MAX = 160;
-export const PASSWORD_MIN = 10;
+export const PASSWORD_MIN = 4;
+export const PIN_FILE_MAX_BYTES = 15_000_000;
 export const REACTION_EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'] as const;
 
-const trimmed = (max: number) => z.string().trim().min(1).max(max);
+const trimmed = (max: number) =>
+  z
+    .string()
+    .trim()
+    .min(1, 'Vyplň toto pole')
+    .max(max, `Max. ${max} znaků`);
 
 export const loginSchema = z.object({
   name: trimmed(80),
@@ -15,7 +21,7 @@ export const loginSchema = z.object({
 
 export const setPasswordSchema = z.object({
   current: z.string().max(200).optional(),
-  next: z.string().min(PASSWORD_MIN, `At least ${PASSWORD_MIN} characters`).max(200),
+  next: z.string().min(PASSWORD_MIN, `Alespoň ${PASSWORD_MIN} znaky`).max(200),
 });
 
 export const createMessageSchema = z.object({
@@ -40,9 +46,13 @@ export const votePollSchema = z.object({
 });
 
 export const createAccommodationSchema = z.object({
-  url: z.url().max(2000),
+  url: z.url('Neplatný odkaz').max(2000),
   title: z.string().trim().max(TITLE_MAX).optional(),
-  priceCzk: z.number().int().positive().max(100_000_000),
+  priceCzk: z
+    .number('Cena musí být číslo')
+    .int('Cena musí být celé číslo')
+    .positive('Cena musí být kladná')
+    .max(100_000_000),
   location: trimmed(120),
   comment: z.string().trim().max(COMMENT_MAX).optional(),
 });
@@ -65,6 +75,19 @@ export const pushSubscribeSchema = z.object({
 
 export const pushUnsubscribeSchema = z.object({ endpoint: z.url().max(1000) });
 
+export const createPinLinkSchema = z.object({
+  title: trimmed(TITLE_MAX),
+  url: z.url('Neplatný odkaz').max(2000),
+});
+
+export const notifyPrefsSchema = z.object({
+  messages: z.boolean(),
+  mentions: z.boolean(),
+  votes: z.boolean(),
+  places: z.boolean(),
+  links: z.boolean(),
+});
+
 export const createUserSchema = z.object({ name: trimmed(80) });
 
 export const updateUserSchema = z
@@ -73,7 +96,7 @@ export const updateUserSchema = z
     active: z.boolean().optional(),
   })
   .refine((v) => v.name !== undefined || v.active !== undefined, {
-    message: 'Nothing to update',
+    message: 'Není co aktualizovat',
   });
 
 export type LoginInput = z.infer<typeof loginSchema>;

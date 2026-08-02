@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { hmacSha256Hex, randomTokenBase64Url } from './crypto';
+import { prefsFromRow } from './notify';
 import type { AppEnv, SessionUser } from '../types';
 
 export const SESSION_COOKIE = 'sid';
@@ -46,7 +47,10 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
   const idHash = await hmacSha256Hex(c.env.SESSION_SECRET, token);
   const row = await c.env.DB.prepare(
     `SELECT s.id_hash AS idHash, s.expires_at AS expiresAt,
-            u.id, u.name, u.role, u.active, u.password_hash AS passwordHash
+            u.id, u.name, u.role, u.active, u.password_hash AS passwordHash,
+            u.notify_messages AS notifyMessages, u.notify_mentions AS notifyMentions,
+            u.notify_votes AS notifyVotes, u.notify_places AS notifyPlaces,
+            u.notify_links AS notifyLinks
        FROM sessions s JOIN users u ON u.id = s.user_id
       WHERE s.id_hash = ?`,
   )
@@ -59,6 +63,11 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
       role: 'admin' | 'member';
       active: number;
       passwordHash: string | null;
+      notifyMessages: number;
+      notifyMentions: number;
+      notifyVotes: number;
+      notifyPlaces: number;
+      notifyLinks: number;
     }>();
 
   if (!row) return null;
@@ -85,6 +94,7 @@ export async function resolveSession(c: Context<AppEnv>): Promise<SessionUser | 
     name: row.name,
     role: row.role,
     hasPassword: row.passwordHash !== null,
+    notify: prefsFromRow(row),
   };
 }
 

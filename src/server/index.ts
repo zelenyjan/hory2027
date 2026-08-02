@@ -6,6 +6,8 @@ import { messageRoutes } from './routes/messages';
 import { pollRoutes } from './routes/polls';
 import { accommodationRoutes, commentRoutes } from './routes/accommodations';
 import { adminRoutes } from './routes/admin';
+import { memberRoutes } from './routes/members';
+import { pinRoutes } from './routes/pins';
 import { pushRoutes } from './routes/push';
 import { limitLogins, limitWrites, requireAdmin, requireAuth } from './middleware';
 import { resolveSession } from './auth/session';
@@ -27,7 +29,7 @@ app.use('/api/*', csrf());
 app.use('/api/*', async (c, next) => {
   const origin = c.req.header('Origin');
   if (origin && c.req.method !== 'GET' && new URL(origin).host !== new URL(c.req.url).host) {
-    throw new HTTPException(403, { message: 'Cross-origin request blocked' });
+    throw new HTTPException(403, { message: 'Blokovaný cross-origin požadavek' });
   }
   await next();
 });
@@ -39,21 +41,27 @@ const api = new Hono<AppEnv>()
   .use('/polls/*', requireAuth, limitWrites)
   .use('/accommodations/*', requireAuth, limitWrites)
   .use('/comments/*', requireAuth, limitWrites)
+  .use('/pins', requireAuth, limitWrites)
+  .use('/pins/*', requireAuth, limitWrites)
+  .use('/members', requireAuth)
+  .use('/members/*', requireAuth)
   .use('/push/*', requireAuth, limitWrites)
   .use('/admin/*', requireAuth, requireAdmin, limitWrites)
   .route('/messages', messageRoutes)
   .route('/polls', pollRoutes)
   .route('/accommodations', accommodationRoutes)
   .route('/comments', commentRoutes)
+  .route('/pins', pinRoutes)
+  .route('/members', memberRoutes)
   .route('/push', pushRoutes)
   .route('/admin', adminRoutes);
 
 api.get('/ws', async (c) => {
   if (c.req.header('Upgrade') !== 'websocket') {
-    return c.text('Expected WebSocket', 426);
+    return c.text('Očekáván WebSocket', 426);
   }
   const user = await resolveSession(c);
-  if (!user) return c.text('Unauthorized', 401);
+  if (!user) return c.text('Neautorizováno', 401);
 
   const stub = c.env.TRIP_ROOM.get(c.env.TRIP_ROOM.idFromName('trip'));
   const url = new URL(c.req.url);
@@ -70,11 +78,11 @@ app.onError((err, c) => {
     return c.json({ error: err.message }, err.status);
   }
   console.error('Unhandled error', err);
-  return c.json({ error: 'Something went wrong' }, 500);
+  return c.json({ error: 'Něco se pokazilo' }, 500);
 });
 
 app.notFound(async (c) => {
-  if (c.req.path.startsWith('/api/')) return c.json({ error: 'Not found' }, 404);
+  if (c.req.path.startsWith('/api/')) return c.json({ error: 'Nenalezeno' }, 404);
   return c.env.ASSETS.fetch(new Request(new URL('/', c.req.url), c.req.raw));
 });
 

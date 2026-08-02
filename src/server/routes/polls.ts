@@ -28,12 +28,17 @@ export const pollRoutes = new Hono<AppEnv>()
     );
 
     broadcast(c, { type: 'poll.created', payload: { pollId: poll!.id } });
-    notifyOthers(c, user.id, {
-      title: `${user.name} started a poll`,
-      body: preview(question),
-      url: '/voting',
-      tag: `poll-${poll!.id}`,
-    });
+    notifyOthers(
+      c,
+      user.id,
+      {
+        title: `${user.name}: nová anketa`,
+        body: preview(question),
+        url: '/voting',
+        tag: `poll-${poll!.id}`,
+      },
+      { kind: 'vote' },
+    );
     return c.json((await getPoll(c.env.DB, poll!.id))!, 201);
   })
 
@@ -43,16 +48,16 @@ export const pollRoutes = new Hono<AppEnv>()
     const user = c.get('user');
 
     const poll = await getPoll(c.env.DB, pollId);
-    if (!poll) throw new HTTPException(404, { message: 'Poll not found' });
-    if (poll.closedAt) throw new HTTPException(400, { message: 'Poll is closed' });
+    if (!poll) throw new HTTPException(404, { message: 'Anketa nenalezena' });
+    if (poll.closedAt) throw new HTTPException(400, { message: 'Anketa je uzavřená' });
 
     const valid = new Set(poll.options.map((o) => o.id));
     const chosen = [...new Set(optionIds)].filter((id) => valid.has(id));
     if (chosen.length !== optionIds.length) {
-      throw new HTTPException(400, { message: 'Unknown option' });
+      throw new HTTPException(400, { message: 'Neznámá možnost' });
     }
     if (!poll.multiChoice && chosen.length > 1) {
-      throw new HTTPException(400, { message: 'This poll is single-choice' });
+      throw new HTTPException(400, { message: 'Tato anketa dovoluje jen jednu možnost' });
     }
 
     const statements = [
@@ -69,12 +74,17 @@ export const pollRoutes = new Hono<AppEnv>()
     await c.env.DB.batch(statements);
 
     broadcast(c, { type: 'poll.voted', payload: { pollId } });
-    notifyOthers(c, user.id, {
-      title: `${user.name} voted`,
-      body: preview(poll.question),
-      url: '/voting',
-      tag: `poll-vote-${pollId}`,
-    });
+    notifyOthers(
+      c,
+      user.id,
+      {
+        title: `${user.name}: nový hlas`,
+        body: preview(poll.question),
+        url: '/voting',
+        tag: `poll-vote-${pollId}`,
+      },
+      { kind: 'vote' },
+    );
     return c.json((await getPoll(c.env.DB, pollId))!);
   })
 
@@ -82,9 +92,9 @@ export const pollRoutes = new Hono<AppEnv>()
     const pollId = intParam(c, 'id');
     const user = c.get('user');
     const poll = await getPoll(c.env.DB, pollId);
-    if (!poll) throw new HTTPException(404, { message: 'Poll not found' });
+    if (!poll) throw new HTTPException(404, { message: 'Anketa nenalezena' });
     if (poll.creatorId !== user.id && user.role !== 'admin') {
-      throw new HTTPException(403, { message: 'Not allowed' });
+      throw new HTTPException(403, { message: 'Nemáš oprávnění' });
     }
 
     await c.env.DB.prepare(
@@ -103,9 +113,9 @@ export const pollRoutes = new Hono<AppEnv>()
     const row = await c.env.DB.prepare('SELECT creator_id AS creatorId FROM polls WHERE id = ?')
       .bind(pollId)
       .first<{ creatorId: number }>();
-    if (!row) throw new HTTPException(404, { message: 'Poll not found' });
+    if (!row) throw new HTTPException(404, { message: 'Anketa nenalezena' });
     if (row.creatorId !== user.id && user.role !== 'admin') {
-      throw new HTTPException(403, { message: 'Not allowed' });
+      throw new HTTPException(403, { message: 'Nemáš oprávnění' });
     }
 
     await c.env.DB.prepare('DELETE FROM polls WHERE id = ?').bind(pollId).run();

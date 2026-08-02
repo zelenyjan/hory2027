@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Message } from '@shared/types';
-import { MESSAGE_MAX } from '@shared/schemas';
 import { api } from '../lib/api';
 import { clearAppBadge } from '../lib/badge';
 import { qk } from '../lib/queries';
 import { formatDay, parseSqlDate } from '../lib/format';
+import { useSession } from '../lib/session';
+import { MentionComposer } from '../components/chat/MentionComposer';
 import { MessageBubble } from '../components/chat/MessageBubble';
 import { ErrorNote, Spinner } from '../components/ui';
 
 const NEAR_BOTTOM_PX = 120;
 
 export function ChatPage() {
+  const me = useSession();
   const queryClient = useQueryClient();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -27,6 +29,7 @@ export function ChatPage() {
   });
 
   const reads = useQuery({ queryKey: qk.reads, queryFn: api.reads });
+  const members = useQuery({ queryKey: qk.members, queryFn: api.members });
 
   // Pages arrive newest-first; flip them so the oldest sits at the top of the scroller.
   const messages = feed.data ? [...feed.data.pages].reverse().flatMap((p) => p.messages) : [];
@@ -146,7 +149,7 @@ export function ChatPage() {
           )}
           {!feed.isPending && messages.length === 0 && (
             <p className="px-6 py-10 text-center text-sm text-ink-soft">
-              🏔️ Quiet on the mountain. Say hi to the crew.
+              🏔️ Na horách je klid. Napiš partě ahoj.
             </p>
           )}
 
@@ -192,7 +195,7 @@ export function ChatPage() {
           <div className="mb-2 flex items-start gap-2 rounded-xl border-l-2 border-brand bg-surface-2 px-3 py-2 text-xs">
             <div className="min-w-0 flex-1">
               <p className="font-medium">
-                {editing ? 'Editing your message' : `Replying to ${replyTo!.userName}`}
+                {editing ? 'Upravuješ svou zprávu' : `Odpověď pro ${replyTo!.userName}`}
               </p>
               <p className="truncate text-ink-soft">{(editing ?? replyTo)!.body}</p>
             </div>
@@ -203,29 +206,23 @@ export function ChatPage() {
         )}
 
         <div className="flex items-end gap-2">
-          <textarea
-            className="max-h-32 min-h-11 field flex-1 resize-none py-2.5"
-            rows={1}
-            maxLength={MESSAGE_MAX}
-            placeholder="Message the group…"
+          <MentionComposer
             value={draft}
-            onChange={(e) => {
-              setDraft(e.target.value);
-              e.target.style.height = 'auto';
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                submit(e);
-              }
+            onChange={setDraft}
+            members={members.data ?? []}
+            selfId={me.id}
+            placeholder="Napiš do skupiny… (@jméno)"
+            onSubmit={() => {
+              if (!draft.trim()) return;
+              if (editing) editMessage.mutate();
+              else sendMessage.mutate();
             }}
           />
           <button
             className="btn-primary h-11 px-4"
             disabled={!draft.trim() || sendMessage.isPending || editMessage.isPending}
           >
-            {editing ? 'Save' : 'Send'}
+            {editing ? 'Uložit' : 'Odeslat'}
           </button>
         </div>
         <ErrorNote error={sendMessage.error ?? editMessage.error} />

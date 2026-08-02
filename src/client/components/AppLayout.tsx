@@ -7,13 +7,15 @@ import { setAppBadge } from '../lib/badge';
 import { qk } from '../lib/queries';
 import { SessionProvider } from '../lib/session';
 import { useTripSocket } from '../lib/useTripSocket';
+import { MountainBackdrop } from './MountainBackdrop';
 import { ProfileSheet } from './ProfileSheet';
 import { Avatar } from './ui';
 
 const TABS = [
   { to: '/', label: 'Chat', icon: '💬', end: true },
-  { to: '/voting', label: 'Voting', icon: '🗳️', end: false },
-  { to: '/places', label: 'Places', icon: '🏔️', end: false },
+  { to: '/voting', label: 'Hlasování', icon: '🗳️', end: false },
+  { to: '/places', label: 'Místa', icon: '🏔️', end: false },
+  { to: '/links', label: 'Odkazy', icon: '🔗', end: false },
 ];
 
 export function AppLayout({ user }: { user: Me }) {
@@ -23,7 +25,7 @@ export function AppLayout({ user }: { user: Me }) {
   const unreadCount = unread.data?.count ?? 0;
   const tabs =
     user.role === 'admin'
-      ? [...TABS, { to: '/admin', label: 'Admin', icon: '⚙️', end: false }]
+      ? [...TABS, { to: '/admin', label: 'Správa', icon: '⚙️', end: false }]
       : TABS;
 
   useEffect(() => {
@@ -49,20 +51,29 @@ export function AppLayout({ user }: { user: Me }) {
                 className={`size-1.5 rounded-full ${connected ? 'animate-pulse bg-good' : 'bg-accent'}`}
                 aria-hidden
               />
-              {connected ? `${online} on the mountain` : 'reconnecting…'}
+              {connected
+                ? online === 1
+                  ? '1 na horách'
+                  : online >= 2 && online <= 4
+                    ? `${online} na horách`
+                    : `${online} na horách`
+                : 'připojuji…'}
             </p>
           </div>
           <button
             onClick={() => setProfileOpen(true)}
             className="rounded-full ring-2 ring-transparent transition hover:ring-brand/40"
-            aria-label="Your profile"
+            aria-label="Tvůj profil"
           >
             <Avatar name={user.name} size={36} />
           </button>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-hidden">
-          <Outlet />
+        <main className="relative min-h-0 flex-1 overflow-hidden">
+          <MountainBackdrop />
+          <div className="relative z-10 h-full min-h-0">
+            <Outlet />
+          </div>
         </main>
 
         <nav className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-1 border-t glass px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]">

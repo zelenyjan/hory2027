@@ -7,13 +7,13 @@ import { resolveSession } from './auth/session';
 
 export const requireAuth: MiddlewareHandler<AppEnv> = async (c, next) => {
   const user = await resolveSession(c);
-  if (!user) throw new HTTPException(401, { message: 'Not signed in' });
+  if (!user) throw new HTTPException(401, { message: 'Nejsi přihlášený' });
   c.set('user', user);
   await next();
 };
 
 export const requireAdmin: MiddlewareHandler<AppEnv> = async (c, next) => {
-  if (c.get('user').role !== 'admin') throw new HTTPException(403, { message: 'Admins only' });
+  if (c.get('user').role !== 'admin') throw new HTTPException(403, { message: 'Jen pro admina' });
   await next();
 };
 
@@ -26,7 +26,7 @@ export async function parseBody<T extends z.ZodType>(
   if (!result.success) {
     const issue = result.error.issues[0];
     throw new HTTPException(400, {
-      message: issue ? `${issue.path.join('.') || 'body'}: ${issue.message}` : 'Invalid request',
+      message: issue ? `${issue.path.join('.') || 'body'}: ${issue.message}` : 'Neplatný požadavek',
     });
   }
   return result.data;
@@ -34,7 +34,7 @@ export async function parseBody<T extends z.ZodType>(
 
 export function intParam(c: Context<AppEnv>, name: string): number {
   const value = Number(c.req.param(name));
-  if (!Number.isInteger(value) || value <= 0) throw new HTTPException(400, { message: 'Bad id' });
+  if (!Number.isInteger(value) || value <= 0) throw new HTTPException(400, { message: 'Neplatné id' });
   return value;
 }
 
@@ -55,7 +55,7 @@ export function rateLimit(
   return async (c, next) => {
     if (c.req.method === 'GET' || c.req.method === 'HEAD') return next();
     const allowed = await room(c).consume(keyFor(c), limit, windowMs);
-    if (!allowed) throw new HTTPException(429, { message: 'Slow down a moment' });
+    if (!allowed) throw new HTTPException(429, { message: 'Zpomal na chvíli' });
     await next();
   };
 }

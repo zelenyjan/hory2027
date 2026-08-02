@@ -15,10 +15,10 @@ export class TripRoom extends DurableObject<Env> {
 
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get('Upgrade') !== 'websocket') {
-      return new Response('Expected WebSocket', { status: 426 });
+      return new Response('Očekáván WebSocket', { status: 426 });
     }
     const userId = Number(new URL(request.url).searchParams.get('userId') ?? 0);
-    if (!userId) return new Response('Unauthorized', { status: 401 });
+    if (!userId) return new Response('Neautorizováno', { status: 401 });
 
     const { 0: client, 1: server } = new WebSocketPair();
     this.ctx.acceptWebSocket(server);

@@ -27,12 +27,12 @@ export function LoginPage() {
         </span>
         <h1 className="gradient-text text-3xl font-bold tracking-tight">Hory 2027</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          Invite only. Open your personal link, or sign in below.
+          Jen pro pozvané. Otevři svůj osobní odkaz, nebo se přihlas níže.
         </p>
 
         {params.get('error') === 'invite' && (
           <p role="alert" className="mt-4 rounded-xl bg-bad/10 px-3.5 py-2.5 text-sm text-bad">
-            That invite link is no longer valid. Ask Green for a new one.
+            Tento pozvánkový odkaz už neplatí. Požádej Greena o nový.
           </p>
         )}
 
@@ -45,7 +45,7 @@ export function LoginPage() {
         >
           <input
             className="field"
-            placeholder="Your name"
+            placeholder="Tvoje jméno"
             autoComplete="username"
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -54,7 +54,7 @@ export function LoginPage() {
           <input
             className="field"
             type="password"
-            placeholder="Password"
+            placeholder="Heslo"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -62,7 +62,7 @@ export function LoginPage() {
           />
           <ErrorNote error={login.error} />
           <button className="btn-primary w-full" disabled={login.isPending}>
-            Sign in
+            Přihlásit se
           </button>
         </form>
 

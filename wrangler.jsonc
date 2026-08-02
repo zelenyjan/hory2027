@@ -20,6 +20,13 @@
       "migrations_dir": "migrations",
     },
   ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "hory2027-media",
+      "preview_bucket_name": "hory2027-media-preview",
+    },
+  ],
   "durable_objects": {
     "bindings": [
       {

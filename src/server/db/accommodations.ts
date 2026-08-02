@@ -12,6 +12,9 @@ type AccommodationRow = {
   userName: string;
   url: string;
   title: string | null;
+  ogTitle: string | null;
+  ogDescription: string | null;
+  ogImageKey: string | null;
   provider: Provider;
   location: string;
   totalPriceCzk: number;
@@ -21,7 +24,9 @@ type AccommodationRow = {
 };
 
 const SELECT_ACCOMMODATION = `
-  SELECT a.id, a.user_id AS userId, u.name AS userName, a.url, a.title, a.provider, a.location,
+  SELECT a.id, a.user_id AS userId, u.name AS userName, a.url, a.title,
+         a.og_title AS ogTitle, a.og_description AS ogDescription, a.og_image_key AS ogImageKey,
+         a.provider, a.location,
          a.total_price_czk AS totalPriceCzk, a.comment, a.created_at AS createdAt,
          (SELECT COUNT(*) FROM accommodation_comments ac
            WHERE ac.accommodation_id = a.id AND ac.deleted_at IS NULL) AS commentCount
@@ -77,6 +82,9 @@ async function attachRatings(
       userName: row.userName,
       url: row.url,
       title: row.title,
+      ogTitle: row.ogTitle,
+      ogDescription: row.ogDescription,
+      hasOgImage: Boolean(row.ogImageKey),
       provider: row.provider,
       location: row.location,
       totalPriceCzk: row.totalPriceCzk,
@@ -118,6 +126,17 @@ export async function getAccommodation(
   return (await attachRatings(db, [row], viewerId))[0] ?? null;
 }
 
+export async function getAccommodationImageKey(
+  db: D1Database,
+  id: number,
+): Promise<string | null> {
+  const row = await db
+    .prepare('SELECT og_image_key AS ogImageKey FROM accommodations WHERE id = ?')
+    .bind(id)
+    .first<{ ogImageKey: string | null }>();
+  return row?.ogImageKey ?? null;
+}
+
 export async function listLocations(db: D1Database): Promise<LocationCount[]> {
   const { results } = await db
     .prepare(
@@ -150,6 +169,9 @@ export async function listComments(
       deletedAt: string | null;
     }>();
 
+  const ids = results.map((r) => r.id);
+  const mentions = await commentMentionsFor(db, ids);
+
   return results.map((row) => ({
     id: row.id,
     accommodationId: row.accommodationId,
@@ -158,5 +180,48 @@ export async function listComments(
     body: row.deletedAt ? '' : row.body,
     createdAt: row.createdAt,
     deleted: row.deletedAt !== null,
+    mentions: row.deletedAt ? [] : (mentions.get(row.id) ?? []),
   }));
+}
+
+async function commentMentionsFor(
+  db: D1Database,
+  ids: number[],
+): Promise<Map<number, UserRef[]>> {
+  const byComment = new Map<number, UserRef[]>();
+  if (ids.length === 0) return byComment;
+
+  const placeholders = ids.map(() => '?').join(',');
+  const { results } = await db
+    .prepare(
+      `SELECT m.comment_id AS commentId, m.user_id AS userId, u.name
+         FROM comment_mentions m JOIN users u ON u.id = m.user_id
+        WHERE m.comment_id IN (${placeholders})
+        ORDER BY u.name`,
+    )
+    .bind(...ids)
+    .all<{ commentId: number; userId: number; name: string }>();
+
+  for (const row of results) {
+    const list = byComment.get(row.commentId) ?? [];
+    list.push({ userId: row.userId, name: row.name });
+    byComment.set(row.commentId, list);
+  }
+  return byComment;
+}
+
+export async function replaceCommentMentions(
+  db: D1Database,
+  commentId: number,
+  userIds: number[],
+): Promise<void> {
+  await db.prepare('DELETE FROM comment_mentions WHERE comment_id = ?').bind(commentId).run();
+  if (userIds.length === 0) return;
+  await db.batch(
+    userIds.map((userId) =>
+      db
+        .prepare('INSERT INTO comment_mentions (comment_id, user_id) VALUES (?, ?)')
+        .bind(commentId, userId),
+    ),
+  );
 }

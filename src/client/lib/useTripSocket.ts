@@ -162,6 +162,7 @@ export function useTripSocket(enabled: boolean): { online: number; connected: bo
           void queryClient.invalidateQueries({ queryKey: qk.polls });
           break;
         case 'accommodation.created':
+        case 'accommodation.updated':
         case 'accommodation.deleted':
         case 'accommodation.rated':
           void queryClient.invalidateQueries({ queryKey: ['accommodations'] });
@@ -175,6 +176,10 @@ export function useTripSocket(enabled: boolean): { online: number; connected: bo
           });
           void queryClient.invalidateQueries({ queryKey: ['accommodations'] });
           void queryClient.invalidateQueries({ queryKey: ['accommodation'] });
+          break;
+        case 'pin.created':
+        case 'pin.deleted':
+          void queryClient.invalidateQueries({ queryKey: qk.pins });
           break;
         case 'presence':
           setOnline(event.payload.online);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { NotifyPrefs } from '@shared/types';
 import { PASSWORD_MIN } from '@shared/schemas';
 import { api } from '../lib/api';
 import { clearAppBadge } from '../lib/badge';
@@ -17,22 +18,30 @@ import { useSession } from '../lib/session';
 import { THEMES, useTheme } from '../lib/theme';
 import { ErrorNote, Sheet } from './ui';
 
+const NOTIFY_OPTIONS: { key: keyof NotifyPrefs; label: string; hint: string }[] = [
+  { key: 'messages', label: 'Zprávy', hint: 'nové zprávy ve chatu' },
+  { key: 'mentions', label: 'Zmínky (@)', hint: 'když tě někdo označí' },
+  { key: 'votes', label: 'Hlasování', hint: 'nové ankety a hlasy' },
+  { key: 'places', label: 'Místa', hint: 'nové ubytování' },
+  { key: 'links', label: 'Odkazy', hint: 'připnuté weby a soubory' },
+];
+
 function pushCopy(status: PushStatus): string {
   switch (status) {
     case 'unsupported':
-      return 'This browser cannot receive push notifications.';
+      return 'Tento prohlížeč neumí push oznámení.';
     case 'unavailable':
-      return 'Notifications are not configured on the server yet.';
+      return 'Oznámení zatím nejsou na serveru nastavená.';
     case 'needs-install':
-      return 'On iPhone, notifications only work from the Home Screen app. Tap Share → Add to Home Screen, open Hory from the new icon, then enable notifications here.';
+      return 'Na iPhonu fungují oznámení jen z appky na ploše. Klepni Sdílet → Přidat na plochu, otevři Hory z nové ikony a pak je tu zapni.';
     case 'denied':
       return deniedHelpText();
     case 'default':
-      return 'Get pinged for new chat messages, votes and places — even with the app closed.';
+      return 'Zapni odběr na tomto zařízení a níže si vyber, co chceš dostávat.';
     case 'unsubscribed':
-      return 'Permission is granted, but this device is not subscribed yet.';
+      return 'Oprávnění je udělené, ale toto zařízení ještě není přihlášené k odběru.';
     case 'subscribed':
-      return 'This device gets alerts for new messages, votes and places.';
+      return 'Toto zařízení je přihlášené. Co přesně dostaneš řídíš zaškrtávátky níže.';
   }
 }
 
@@ -48,9 +57,11 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   );
   const [pushNote, setPushNote] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
+  const [notify, setNotify] = useState<NotifyPrefs>(user.notify);
 
   useEffect(() => {
     if (!open) return;
+    setNotify(user.notify);
     let cancelled = false;
     const refresh = () => {
       void getPushStatus().then((status) => {
@@ -58,7 +69,6 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       });
     };
     refresh();
-    // After the user flips the OS/browser toggle, re-read when they come back.
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener('focus', refresh);
     return () => {
@@ -66,7 +76,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       document.removeEventListener('visibilitychange', refresh);
       window.removeEventListener('focus', refresh);
     };
-  }, [open]);
+  }, [open, user.notify]);
 
   const savePassword = useMutation({
     mutationFn: () => api.setPassword(next, current || undefined),
@@ -75,6 +85,15 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       setCurrent('');
       setNext('');
       setDone(true);
+    },
+  });
+
+  const saveNotify = useMutation({
+    mutationFn: (prefs: NotifyPrefs) => api.updateNotify(prefs),
+    onSuccess: (me) => {
+      queryClient.setQueryData(qk.me, me);
+      setNotify(me.notify);
+      setPushNote('Nastavení oznámení uloženo.');
     },
   });
 
@@ -93,12 +112,12 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
     try {
       const nextStatus = pushStatus === 'subscribed' ? await disablePush() : await enablePush();
       setPushStatus(nextStatus);
-      if (nextStatus === 'subscribed') setPushNote('Notifications enabled on this device.');
-      if (nextStatus === 'unsubscribed') setPushNote('Notifications turned off on this device.');
+      if (nextStatus === 'subscribed') setPushNote('Oznámení na tomto zařízení jsou zapnutá.');
+      if (nextStatus === 'unsubscribed') setPushNote('Oznámení na tomto zařízení jsou vypnutá.');
       if (nextStatus === 'needs-install') setPushNote(pushCopy('needs-install'));
       if (nextStatus === 'denied') setPushNote(deniedHelpText());
     } catch (error) {
-      setPushNote(error instanceof Error ? error.message : 'Could not update notifications');
+      setPushNote(error instanceof Error ? error.message : 'Oznámení se nepodařilo upravit');
     } finally {
       setPushBusy(false);
     }
@@ -122,7 +141,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
     <Sheet open={open} title={user.name} onClose={onClose}>
       <div className="space-y-6">
         <section>
-          <h3 className="mb-2 font-medium">Theme</h3>
+          <h3 className="mb-2 font-medium">Vzhled</h3>
           <div className="flex gap-1 rounded-xl border border-line/70 bg-surface-2/60 p-1 text-sm">
             {THEMES.map((option) => (
               <button
@@ -142,7 +161,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
         </section>
 
         <section className="border-t border-line pt-5">
-          <h3 className="mb-1 font-medium">Notifications</h3>
+          <h3 className="mb-1 font-medium">Oznámení</h3>
           <p className="mb-3 text-sm text-ink-soft">{pushCopy(pushStatus)}</p>
           <div className="flex flex-col gap-2">
             {pushStatus !== 'needs-install' && (
@@ -157,7 +176,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
                 }
                 onClick={() => void togglePush()}
               >
-                {pushStatus === 'subscribed' ? 'Turn off on this device' : 'Enable notifications'}
+                {pushStatus === 'subscribed' ? 'Vypnout na tomto zařízení' : 'Zapnout oznámení'}
               </button>
             )}
             {pushStatus === 'subscribed' && (
@@ -167,21 +186,81 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
                 disabled={pushBusy}
                 onClick={() => void sendTest()}
               >
-                Send a test notification
+                Poslat zkušební oznámení
               </button>
             )}
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <p className="text-sm font-medium">Co chci dostávat</p>
+            <p className="text-xs text-ink-soft">
+              Platí pro všechna tvá zařízení. Zmínky můžou přijít i když máš vypnuté běžné zprávy.
+            </p>
+            {NOTIFY_OPTIONS.map((option) => (
+              <label key={option.key} className="flex items-start gap-2.5 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-[var(--color-brand)]"
+                  checked={notify[option.key]}
+                  onChange={(e) => {
+                    const nextPrefs = { ...notify, [option.key]: e.target.checked };
+                    setNotify(nextPrefs);
+                    saveNotify.mutate(nextPrefs);
+                  }}
+                />
+                <span>
+                  <span className="font-medium">{option.label}</span>
+                  <span className="block text-xs text-ink-soft">{option.hint}</span>
+                </span>
+              </label>
+            ))}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <button
+                type="button"
+                className="btn-ghost px-3 py-1.5 text-xs"
+                onClick={() => {
+                  const nextPrefs: NotifyPrefs = {
+                    messages: true,
+                    mentions: true,
+                    votes: true,
+                    places: true,
+                    links: true,
+                  };
+                  setNotify(nextPrefs);
+                  saveNotify.mutate(nextPrefs);
+                }}
+              >
+                Vše
+              </button>
+              <button
+                type="button"
+                className="btn-ghost px-3 py-1.5 text-xs"
+                onClick={() => {
+                  const nextPrefs: NotifyPrefs = {
+                    messages: false,
+                    mentions: true,
+                    votes: false,
+                    places: false,
+                    links: false,
+                  };
+                  setNotify(nextPrefs);
+                  saveNotify.mutate(nextPrefs);
+                }}
+              >
+                Jen zmínky
+              </button>
+            </div>
+            <ErrorNote error={saveNotify.error} />
           </div>
           {pushNote && <p className="mt-2 text-sm text-ink-soft">{pushNote}</p>}
         </section>
 
         <section className="border-t border-line pt-5">
-          <h3 className="mb-1 font-medium">
-            {user.hasPassword ? 'Change password' : 'Set a password'}
-          </h3>
+          <h3 className="mb-1 font-medium">{user.hasPassword ? 'Změnit heslo' : 'Nastavit heslo'}</h3>
           <p className="mb-3 text-sm text-ink-soft">
             {user.hasPassword
-              ? 'You can sign in with your name and password.'
-              : `Optional — your invite link keeps working either way. At least ${PASSWORD_MIN} characters.`}
+              ? 'Pak se můžeš přihlásit jménem a heslem.'
+              : `Volitelné — pozvánkový odkaz funguje dál. Alespoň ${PASSWORD_MIN} znaky.`}
           </p>
           <form
             className="space-y-3"
@@ -196,7 +275,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
                 className="field"
                 type="password"
                 autoComplete="current-password"
-                placeholder="Current password"
+                placeholder="Současné heslo"
                 value={current}
                 onChange={(e) => setCurrent(e.target.value)}
                 required
@@ -206,16 +285,16 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
               className="field"
               type="password"
               autoComplete="new-password"
-              placeholder="New password"
+              placeholder="Nové heslo"
               minLength={PASSWORD_MIN}
               value={next}
               onChange={(e) => setNext(e.target.value)}
               required
             />
             <ErrorNote error={savePassword.error} />
-            {done && <p className="text-sm text-good">Password saved.</p>}
+            {done && <p className="text-sm text-good">Heslo uloženo.</p>}
             <button className="btn-primary w-full" disabled={savePassword.isPending}>
-              Save password
+              Uložit heslo
             </button>
           </form>
         </section>
@@ -226,7 +305,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
             disabled={logout.isPending}
             onClick={() => logout.mutate()}
           >
-            Sign out
+            Odhlásit se
           </button>
         </section>
       </div>

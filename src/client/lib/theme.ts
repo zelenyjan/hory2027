@@ -4,9 +4,9 @@ export type Theme = 'light' | 'dark' | 'system';
 
 export const THEME_KEY = 'hory-theme';
 export const THEMES: { value: Theme; label: string }[] = [
-  { value: 'light', label: 'Snow' },
-  { value: 'dark', label: 'Night' },
-  { value: 'system', label: 'System' },
+  { value: 'light', label: 'Sníh' },
+  { value: 'dark', label: 'Noc' },
+  { value: 'system', label: 'Systém' },
 ];
 
 export function readTheme(): Theme {

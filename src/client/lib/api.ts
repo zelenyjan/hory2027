@@ -4,9 +4,12 @@ import type {
   AdminUser,
   LocationCount,
   Me,
+  Member,
   Message,
   MessagePage,
   MessageRead,
+  NotifyPrefs,
+  Pin,
   Poll,
 } from '@shared/types';
 
@@ -20,15 +23,19 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const isForm = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     credentials: 'same-origin',
-    headers: init?.body ? { 'Content-Type': 'application/json' } : undefined,
     ...init,
+    headers: {
+      ...(init?.body && !isForm ? { 'Content-Type': 'application/json' } : undefined),
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
-    throw new ApiError(response.status, body?.error ?? `Request failed (${response.status})`);
+    throw new ApiError(response.status, body?.error ?? `Požadavek selhal (${response.status})`);
   }
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
@@ -43,6 +50,8 @@ export const api = {
   logout: () => send<{ ok: true }>('POST', '/auth/logout'),
   setPassword: (next: string, current?: string) =>
     send<Me>('POST', '/auth/password', { next, current }),
+  updateNotify: (notify: NotifyPrefs) => send<Me>('PATCH', '/auth/notify', notify),
+  members: () => request<Member[]>('/members'),
 
   messages: (cursor?: string) =>
     request<MessagePage>(`/messages${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`),
@@ -92,6 +101,16 @@ export const api = {
   addComment: (id: number, body: string) =>
     send<AccommodationComment[]>('POST', `/accommodations/${id}/comments`, { body }),
   deleteComment: (id: number) => send<{ ok: true }>('DELETE', `/comments/${id}`),
+
+  pins: () => request<Pin[]>('/pins'),
+  createPinLink: (title: string, url: string) => send<Pin>('POST', '/pins/link', { title, url }),
+  createPinFile: (title: string, file: File) => {
+    const body = new FormData();
+    body.set('title', title);
+    body.set('file', file);
+    return request<Pin>('/pins/file', { method: 'POST', body });
+  },
+  deletePin: (id: number) => send<{ ok: true }>('DELETE', `/pins/${id}`),
 
   adminUsers: () => request<AdminUser[]>('/admin/users'),
   createUser: (name: string) =>

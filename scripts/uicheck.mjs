@@ -55,12 +55,12 @@ await page.type('input[type="password"]', PASSWORD);
 await page.click('button[type="submit"], form button');
 await page.waitForFunction(
   () =>
-    document.body.innerText.includes('Choose your password') ||
+    document.body.innerText.includes('Zvol si heslo') ||
     document.querySelector('nav a[href="/voting"]') !== null,
   { timeout: 10_000 },
 );
 
-if ((await text()).includes('Choose your password')) {
+if ((await text()).includes('Zvol si heslo')) {
   step('Admin password gate');
   await shot('01b-password-gate');
   await page.type('input[type="password"]', PASSWORD);
@@ -71,7 +71,7 @@ await shot('02-chat');
 
 step('Send a message with emoticons');
 await page.type('textarea', 'Ahoj z prohlizece :) <3');
-await clickText('button', 'Send');
+await clickText('button', 'Odeslat');
 await page.waitForFunction(() => document.body.innerText.includes('Ahoj z prohlizece 🙂 ❤️'), {
   timeout: 10_000,
 });
@@ -94,16 +94,16 @@ await page.waitForFunction(() => document.body.innerText.includes('Kdy vyrazíme
 await clickText('button', 'Březen');
 await new Promise((r) => setTimeout(r, 1200));
 await shot('06-voting');
-await clickText('button', 'Who voted?');
+await clickText('button', 'Kdo hlasoval?');
 await page.waitForSelector('div[role="dialog"]');
 await shot('07-who-voted');
-await clickText('div[role="dialog"] button', 'Close');
+await clickText('div[role="dialog"] button', 'Zavřít');
 
 step('Places tab');
 await page.click('nav a[href="/places"]');
 await page.waitForFunction(() => document.body.innerText.includes('Sölden'), { timeout: 10_000 });
 await shot('08-places');
-await clickText('button', 'Cheapest');
+await clickText('button', 'Nejlevnější');
 await new Promise((r) => setTimeout(r, 600));
 console.log(`  url after sort: ${page.url()}`);
 await clickText('button', 'Sölden (');
@@ -112,16 +112,19 @@ console.log(`  url after filter: ${page.url()}`);
 await shot('09-places-filtered');
 
 step('Add a place with a name');
-await clickText('button', 'Add place');
+await clickText('button', 'Přidat místo');
 await page.waitForSelector('div[role="dialog"] form');
-await page.type('div[role="dialog"] input[placeholder="Chalet Alpenrose"]', 'Haus Testovaci');
+await page.type(
+  'div[role="dialog"] input[placeholder^="Chalet Alpenrose"]',
+  'Haus Testovaci',
+);
 await page.type(
   'div[role="dialog"] input[type="url"]',
   'https://www.booking.com/hotel/at/testovaci.html',
 );
 await page.type('div[role="dialog"] input[type="number"]', '41000');
 await page.type('div[role="dialog"] input[placeholder="Sölden"]', 'Sölden');
-await clickText('div[role="dialog"] button', 'Add to shortlist');
+await clickText('div[role="dialog"] button', 'Přidat na seznam');
 await page.waitForFunction(() => document.body.innerText.includes('Haus Testovaci'), {
   timeout: 10_000,
 });
@@ -130,10 +133,11 @@ console.log(`  title links to: ${titleHref}`);
 await shot('09b-place-with-name');
 
 step('Place detail + comment');
-await clickText('a', '💬');
+await clickText('a', 'Detail');
 await page.waitForSelector('textarea', { timeout: 10_000 });
+await page.waitForFunction(() => document.body.innerText.includes('Hlasy'), { timeout: 5_000 });
 await page.type('textarea', 'Testovaci komentar');
-await clickText('button', 'Post');
+await clickText('button', 'Odeslat');
 await page.waitForFunction(() => document.body.innerText.includes('Testovaci komentar'), {
   timeout: 10_000,
 });
@@ -141,15 +145,15 @@ await shot('10-place-detail');
 
 step('Admin tab');
 await page.click('nav a[href="/admin"]');
-await page.waitForFunction(() => document.body.innerText.includes('Admin'), { timeout: 10_000 });
+await page.waitForFunction(() => document.body.innerText.includes('Správa'), { timeout: 10_000 });
 await shot('11-admin');
-await page.type('input[placeholder="Add someone by name"]', `Katka ${Date.now() % 10000}`);
-await clickText('form button', 'Add');
+await page.type('input[placeholder="Přidej někoho jménem"]', `Katka ${Date.now() % 10000}`);
+await clickText('form button', 'Přidat');
 await page.waitForSelector('div[role="dialog"]', { timeout: 10_000 });
 await shot('12-invite-link');
 const invite = await page.$eval('div[role="dialog"] code', (n) => n.textContent);
 console.log(`  invite link: ${invite}`);
-await clickText('div[role="dialog"] button', 'Close');
+await clickText('div[role="dialog"] button', 'Zavřít');
 
 step('Read receipts: invited member opens the chat');
 await page.click('nav a[href="/"]');
@@ -180,24 +184,24 @@ await page.waitForSelector('div[role="dialog"]');
 const readBy = await page.$eval('div[role="dialog"]', (n) => n.innerText.split('\n')[1] ?? '');
 console.log(`  sheet says: ${readBy}`);
 await shot('12c-read-by');
-await clickText('div[role="dialog"] button', 'Close');
+await clickText('div[role="dialog"] button', 'Zavřít');
 
 step('Profile sheet + theme switch');
 await page.click('header button');
 await page.waitForSelector('div[role="dialog"]');
 await shot('13-profile');
-await clickText('div[role="dialog"] button', 'Night');
+await clickText('div[role="dialog"] button', 'Noc');
 await new Promise((r) => setTimeout(r, 400));
-await clickText('div[role="dialog"] button', 'Close');
+await clickText('div[role="dialog"] button', 'Zavřít');
 await shot('13b-night-theme');
 await page.click('nav a[href="/places"]');
 await new Promise((r) => setTimeout(r, 600));
 await shot('13c-night-places');
 await page.click('header button');
 await page.waitForSelector('div[role="dialog"]');
-await clickText('div[role="dialog"] button', 'Snow');
+await clickText('div[role="dialog"] button', 'Sníh');
 await new Promise((r) => setTimeout(r, 300));
-await clickText('div[role="dialog"] button', 'Close');
+await clickText('div[role="dialog"] button', 'Zavřít');
 
 step('Desktop viewport');
 await page.setViewport({ width: 1280, height: 900 });

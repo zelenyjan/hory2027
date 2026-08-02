@@ -24,7 +24,11 @@ const SELECT_MESSAGE = `
     LEFT JOIN messages q ON q.id = m.quoted_message_id
     LEFT JOIN users qu ON qu.id = q.user_id`;
 
-function mapRow(row: MessageRow, reactions: Message['reactions']): Message {
+function mapRow(
+  row: MessageRow,
+  reactions: Message['reactions'],
+  mentions: UserRef[],
+): Message {
   const deleted = row.deletedAt !== null;
   return {
     id: row.id,
@@ -45,6 +49,7 @@ function mapRow(row: MessageRow, reactions: Message['reactions']): Message {
     editedAt: row.editedAt,
     deleted,
     reactions,
+    mentions: deleted ? [] : mentions,
   };
 }
 
@@ -72,6 +77,29 @@ async function reactionsFor(
     const user: UserRef = { userId: row.userId, name: row.name };
     if (entry) entry.users.push(user);
     else list.push({ emoji: row.emoji, users: [user] });
+    byMessage.set(row.messageId, list);
+  }
+  return byMessage;
+}
+
+async function mentionsFor(db: D1Database, ids: number[]): Promise<Map<number, UserRef[]>> {
+  const byMessage = new Map<number, UserRef[]>();
+  if (ids.length === 0) return byMessage;
+
+  const placeholders = ids.map(() => '?').join(',');
+  const { results } = await db
+    .prepare(
+      `SELECT m.message_id AS messageId, m.user_id AS userId, u.name
+         FROM message_mentions m JOIN users u ON u.id = m.user_id
+        WHERE m.message_id IN (${placeholders})
+        ORDER BY u.name`,
+    )
+    .bind(...ids)
+    .all<{ messageId: number; userId: number; name: string }>();
+
+  for (const row of results) {
+    const list = byMessage.get(row.messageId) ?? [];
+    list.push({ userId: row.userId, name: row.name });
     byMessage.set(row.messageId, list);
   }
   return byMessage;
@@ -111,16 +139,16 @@ export async function listMessages(
   const { results } = await statement.all<MessageRow>();
   const hasMore = results.length > limit;
   const rows = hasMore ? results.slice(0, limit) : results;
-  const reactions = await reactionsFor(
-    db,
-    rows.map((r) => r.id),
+  const ids = rows.map((r) => r.id);
+  const reactions = await reactionsFor(db, ids);
+  const mentions = await mentionsFor(db, ids);
+  const messages = rows.map((row) =>
+    mapRow(row, reactions.get(row.id) ?? [], mentions.get(row.id) ?? []),
   );
-  const messages = rows.map((row) => mapRow(row, reactions.get(row.id) ?? []));
 
   return {
     messages: messages.reverse(),
-    nextCursor:
-      hasMore && rows.length > 0 ? encodeCursor(mapRow(rows[rows.length - 1]!, [])) : null,
+    nextCursor: hasMore && rows.length > 0 ? encodeCursor(rows[rows.length - 1]!) : null,
   };
 }
 
@@ -128,7 +156,33 @@ export async function getMessage(db: D1Database, id: number): Promise<Message | 
   const row = await db.prepare(`${SELECT_MESSAGE} WHERE m.id = ?`).bind(id).first<MessageRow>();
   if (!row) return null;
   const reactions = await reactionsFor(db, [id]);
-  return mapRow(row, reactions.get(id) ?? []);
+  const mentions = await mentionsFor(db, [id]);
+  return mapRow(row, reactions.get(id) ?? [], mentions.get(id) ?? []);
+}
+
+export async function replaceMentions(
+  db: D1Database,
+  messageId: number,
+  userIds: number[],
+): Promise<void> {
+  await db.prepare('DELETE FROM message_mentions WHERE message_id = ?').bind(messageId).run();
+  if (userIds.length === 0) return;
+  await db.batch(
+    userIds.map((userId) =>
+      db
+        .prepare('INSERT INTO message_mentions (message_id, user_id) VALUES (?, ?)')
+        .bind(messageId, userId),
+    ),
+  );
+}
+
+export async function listActiveMembers(
+  db: D1Database,
+): Promise<{ id: number; name: string }[]> {
+  const { results } = await db
+    .prepare('SELECT id, name FROM users WHERE active = 1 ORDER BY name COLLATE NOCASE')
+    .all<{ id: number; name: string }>();
+  return results;
 }
 
 /** Everyone active, so the client can also tell who has *not* caught up yet. */

@@ -28,6 +28,31 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
   );
 }
 
+function Shot({
+  src,
+  alt,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+}) {
+  return (
+    <figure className="my-4">
+      <div className="overflow-hidden rounded-2xl border border-line/70 bg-surface-2 shadow-sm">
+        <img
+          src={src}
+          alt={alt}
+          className="block w-full"
+          loading="lazy"
+          decoding="async"
+        />
+      </div>
+      <figcaption className="mt-2 text-center text-xs text-ink-soft">{caption}</figcaption>
+    </figure>
+  );
+}
+
 export function AboutPage() {
   return (
     <div className="h-full overflow-y-auto">
@@ -41,30 +66,104 @@ export function AboutPage() {
           </span>
           <h1 className="gradient-text text-3xl font-bold tracking-tight">Hory 2027</h1>
           <p className="mt-2 text-ink-soft">
-            Soukromá appka na plánování lyžařského výletu — chat, hlasování a shortlist ubytování na
+            Soukromá appka na plánování lyžařského výletu — chat, hlasování a seznam ubytování na
             jednom místě.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Link to="/login" className="btn-primary px-4 py-2.5 text-sm">
               Přihlásit se
             </Link>
+            <a href="#prihlaseni" className="btn-ghost px-4 py-2.5 text-sm">
+              Přihlášení a heslo
+            </a>
             <a href="#instalace" className="btn-ghost px-4 py-2.5 text-sm">
               Instalace do telefonu
             </a>
           </div>
         </header>
 
-        <Section title="Jak se dostanu dovnitř?">
+        <Section id="prihlaseni" title="Jak se dostanu dovnitř?">
           <p>
-            Appka je jen pro pozvané. Green ti pošle osobní odkaz (vypadá jako{' '}
-            <code className="rounded bg-brand-soft px-1.5 py-0.5 text-brand">
-              hory2027.baby/join/…
-            </code>
-            ). Otevři ho — a jsi přihlášený. Odkaz funguje dlouhodobě, dokud ho Green nezruší.
+            Appka je jen pro pozvané. Máš dvě cesty: osobní odkaz od Greena, nebo (až si nastavíš
+            heslo) klasické přihlášení jménem a heslem.
           </p>
+
+          <h3 className="pt-2 text-base font-semibold text-ink">1) Pozvánkový odkaz</h3>
+          <ol className="space-y-2">
+            <Step n={1}>
+              Green ti pošle odkaz — vypadá jako{' '}
+              <code className="rounded bg-brand-soft px-1.5 py-0.5 text-brand">
+                hory2027.baby/join/…
+              </code>
+              .
+            </Step>
+            <Step n={2}>Otevři ho v prohlížeči (na iPhonu ideálně Safari).</Step>
+            <Step n={3}>Appka tě rovnou pustí dovnitř — bez vyplňování hesla.</Step>
+          </ol>
+          <Shot
+            src="/about/02-invite-link.png"
+            alt="Správa — vygenerovaný pozvánkový odkaz"
+            caption="Takto vypadá pozvánka ve Správě — Green ti ji pošle (odkaz funguje opakovaně)."
+          />
           <p>
-            Volitelně si v profilu můžeš nastavit heslo a pak se přihlašovat i jménem a heslem na
-            stránce Přihlásit se.
+            Stejný odkaz můžeš použít znovu na jiném telefonu nebo po odhlášení. Když odkaz ztratíš,
+            Green ti vygeneruje nový (starý pak přestane fungovat).
+          </p>
+
+          <h3 className="pt-2 text-base font-semibold text-ink">2) Přihlášení jménem a heslem</h3>
+          <p>
+            Funguje až poté, co si v profilu heslo nastavíš. Pak otevři{' '}
+            <Link to="/login" className="text-brand underline-offset-2 hover:underline">
+              /login
+            </Link>
+            , vyplň jméno a heslo a potvrď „Přihlásit se“.
+          </p>
+          <Shot
+            src="/about/01-login.png"
+            alt="Přihlašovací obrazovka Hory 2027"
+            caption="Skutečná obrazovka /login — jméno + heslo."
+          />
+          <p>
+            Pozvánkový odkaz po nastavení hesla pořád funguje, pokud ho Green (nebo ty) nevypne.
+          </p>
+        </Section>
+
+        <Section id="heslo" title="Nastavení a změna hesla">
+          <p>
+            Heslo je volitelné. Hodí se, když nechceš pokaždé hledat pozvánku, nebo když se
+            přihlašuješ z počítače.
+          </p>
+
+          <h3 className="pt-2 text-base font-semibold text-ink">První nastavení</h3>
+          <ol className="space-y-2">
+            <Step n={1}>V appce klepni na svůj avatar vpravo nahoře — otevře se profil.</Step>
+            <Step n={2}>V sekci „Nastavit heslo“ zadej nové heslo (alespoň 4 znaky).</Step>
+            <Step n={3}>Potvrď „Uložit heslo“. Pozvánka ti dál funguje.</Step>
+          </ol>
+          <Shot
+            src="/about/03-set-password.png"
+            alt="Profil — první nastavení hesla"
+            caption="Profil (avatar nahoře) → Nastavit heslo."
+          />
+
+          <h3 className="pt-2 text-base font-semibold text-ink">Změna hesla</h3>
+          <ol className="space-y-2">
+            <Step n={1}>Znovu otevři profil (avatar nahoře).</Step>
+            <Step n={2}>
+              V sekci „Změnit heslo“ vyplň současné heslo a nové heslo, pak „Uložit heslo“.
+            </Step>
+            <Step n={3}>
+              Uvidíš potvrzení „Heslo uloženo.“ Od té chvíle platí jen nové heslo na /login.
+            </Step>
+          </ol>
+          <Shot
+            src="/about/04-change-password.png"
+            alt="Profil — změna hesla"
+            caption="Profil → Změnit heslo (současné + nové heslo)."
+          />
+          <p>
+            Heslo zapomeneš? Použij pozvánkový odkaz (pokud ho máš), nebo napiš Greenovi — vygeneruje
+            nový odkaz. Staré heslo z odkazu neobnovíš bez Greena.
           </p>
         </Section>
 
@@ -72,20 +171,22 @@ export function AboutPage() {
           <ul className="list-disc space-y-2 pl-5">
             <li>
               <strong className="font-medium text-ink">Chat</strong> — skupinová konverzace, reakce,
-              odpovědi a přečtení zpráv (fajfky).
+              odpovědi, @zmínky a přečtení zpráv (fajfky).
             </li>
             <li>
               <strong className="font-medium text-ink">Hlasování</strong> — ankety mimo chat. Hlasy
               jsou v partě vidět se jmény.
             </li>
             <li>
-              <strong className="font-medium text-ink">Místa</strong> — shortlist ubytování s cenou v
+              <strong className="font-medium text-ink">Místa</strong> — seznam ubytování s cenou v
               Kč, palci nahoru/dolů a komentáři u každého místa.
             </li>
+            <li>
+              <strong className="font-medium text-ink">Odkazy</strong> — důležité weby a soubory
+              (ski pass, mapky, rezervace), které si parta připne se společným názvem.
+            </li>
           </ul>
-          <p>
-            Vpravo nahoře je tvůj profil: téma (Sníh / Noc), hesla a oznámení.
-          </p>
+          <p>Vpravo nahoře je tvůj profil: téma (Sníh / Noc), hesla a oznámení.</p>
         </Section>
 
         <Section title="Jak používat Chat">
@@ -94,7 +195,10 @@ export function AboutPage() {
             <li>reakce (👍 ❤️ …),</li>
             <li>odpověď na konkrétní zprávu,</li>
             <li>úpravu nebo smazání vlastní zprávy,</li>
-            <li>u svých zpráv seznam, kdo už je přečetl.</li>
+            <li>u svých zpráv seznam, kdo už je přečetl,</li>
+            <li>
+              zmínku napsáním <code className="text-ink">@</code> a výběrem jména ze seznamu.
+            </li>
           </ul>
           <p>
             Klasické smajlíky jako <code className="text-ink">:)</code>,{' '}
@@ -114,11 +218,13 @@ export function AboutPage() {
         <Section title="Jak používat Místa">
           <p>
             Přidej ubytování tlačítkem „Přidat místo“: odkaz (Booking, Airbnb, …), celkovou cenu v
-            Kč, lokalitu a volitelně název a poznámku. Název na kartě je klikací a otevře odkaz.
+            Kč, lokalitu a volitelně vlastní název a poznámku. Název, popis a fotku zkusíme načíst
+            z odkazu automaticky (Booking a Airbnb to často blokují).
           </p>
           <p>
             U každého místa dej palec nahoru nebo dolů, filtruj podle lokality a seřaď podle skóre,
-            ceny nebo data. Do diskuze u místa se dostaneš přes bublinu s komentáři.
+            ceny nebo data. Tlačítko Detail otevře stránku místa — uvidíš kdo hlasoval a jak, plus
+            diskuzi (v komentářích můžeš stejně jako v chatu označit lidi přes @).
           </p>
         </Section>
 
@@ -153,7 +259,10 @@ export function AboutPage() {
             </Step>
             <Step n={2}>V appce klepni na svůj avatar vpravo nahoře.</Step>
             <Step n={3}>V sekci Oznámení zvol „Zapnout oznámení“ a povol je v systémovém dialogu.</Step>
-            <Step n={4}>Volitelně pošli „Zkušební oznámení“, ať víš, že to funguje.</Step>
+            <Step n={4}>
+              Zaškrtni, co chceš dostávat (zprávy, zmínky, hlasy, místa, odkazy) — nebo „Jen zmínky“.
+            </Step>
+            <Step n={5}>Volitelně pošli „Zkušební oznámení“, ať víš, že to funguje.</Step>
           </ol>
           <p>
             Když jsi oznámení jednou zakázal: v Nastavení telefonu → Oznámení → Hory zapni „Povolit

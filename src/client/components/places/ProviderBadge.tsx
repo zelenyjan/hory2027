@@ -9,7 +9,7 @@ const STYLES: Record<Provider, { label: string; className: string }> = {
 const NAMES: Record<Provider, string> = {
   booking: 'Booking.com',
   airbnb: 'Airbnb',
-  other: 'External link',
+  other: 'Externí odkaz',
 };
 
 export function ProviderBadge({ provider, url }: { provider: Provider; url: string }) {
@@ -19,7 +19,7 @@ export function ProviderBadge({ provider, url }: { provider: Provider; url: stri
       href={url}
       target="_blank"
       rel="noreferrer noopener"
-      title={`Open on ${NAMES[provider]}`}
+      title={`Otevřít na ${NAMES[provider]}`}
       onClick={(e) => e.stopPropagation()}
       className={`inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${style.className}`}
     >

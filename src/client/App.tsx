@@ -8,6 +8,7 @@ import { ChatPage } from './pages/ChatPage';
 import { VotingPage } from './pages/VotingPage';
 import { PlacesPage } from './pages/PlacesPage';
 import { PlaceDetailPage } from './pages/PlaceDetailPage';
+import { LinksPage } from './pages/LinksPage';
 import { AdminPage } from './pages/AdminPage';
 import { Spinner } from './components/ui';
 
@@ -43,6 +44,7 @@ export function App() {
         <Route path="/voting" element={<VotingPage />} />
         <Route path="/places" element={<PlacesPage />} />
         <Route path="/places/:id" element={<PlaceDetailPage />} />
+        <Route path="/links" element={<LinksPage />} />
         <Route
           path="/admin"
           element={user.role === 'admin' ? <AdminPage /> : <Navigate to="/" replace />}

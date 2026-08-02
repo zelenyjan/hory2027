@@ -1,11 +1,12 @@
 import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
-import { loginSchema, setPasswordSchema } from '../../shared/schemas';
-import type { Me } from '../../shared/types';
+import { loginSchema, notifyPrefsSchema, setPasswordSchema } from '../../shared/schemas';
+import type { Me, NotifyPrefs } from '../../shared/types';
 import { hashPassword, sha256Hex, timingSafeEqual, verifyPassword } from '../auth/crypto';
+import { DEFAULT_NOTIFY, prefsFromRow } from '../auth/notify';
 import { createSession, destroySession, resolveSession } from '../auth/session';
 import { parseBody, requireAuth } from '../middleware';
-import type { AppEnv } from '../types';
+import type { AppEnv, SessionUser } from '../types';
 
 type UserAuthRow = {
   id: number;
@@ -14,6 +15,11 @@ type UserAuthRow = {
   active: number;
   passwordHash: string | null;
   passwordSalt: string | null;
+  notifyMessages: number;
+  notifyMentions: number;
+  notifyVotes: number;
+  notifyPlaces: number;
+  notifyLinks: number;
 };
 
 function toMe(user: {
@@ -21,11 +27,16 @@ function toMe(user: {
   name: string;
   role: 'admin' | 'member';
   hasPassword: boolean;
+  notify: NotifyPrefs;
 }): Me {
   return {
     ...user,
     mustSetPassword: user.role === 'admin' && !user.hasPassword,
   };
+}
+
+function sessionToMe(user: SessionUser): Me {
+  return toMe(user);
 }
 
 /** Invite link: trade the one-and-only token for a session, then land in the app. */
@@ -48,13 +59,16 @@ export const authRoutes = new Hono<AppEnv>()
   .post('/login', async (c) => {
     const { name, password } = await parseBody(c, loginSchema);
     const user = await c.env.DB.prepare(
-      `SELECT id, name, role, active, password_hash AS passwordHash, password_salt AS passwordSalt
+      `SELECT id, name, role, active, password_hash AS passwordHash, password_salt AS passwordSalt,
+              notify_messages AS notifyMessages, notify_mentions AS notifyMentions,
+              notify_votes AS notifyVotes, notify_places AS notifyPlaces,
+              notify_links AS notifyLinks
          FROM users WHERE name = ? COLLATE NOCASE`,
     )
       .bind(name)
       .first<UserAuthRow>();
 
-    const invalid = new HTTPException(401, { message: 'Wrong name or password' });
+    const invalid = new HTTPException(401, { message: 'Špatné jméno nebo heslo' });
     if (!user || user.active !== 1) throw invalid;
 
     // Admin bootstrap: the seeded secret works only until a real password is set.
@@ -66,7 +80,13 @@ export const authRoutes = new Hono<AppEnv>()
 
     await createSession(c, user.id);
     return c.json(
-      toMe({ id: user.id, name: user.name, role: user.role, hasPassword: !bootstrapping }),
+      toMe({
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        hasPassword: !bootstrapping,
+        notify: prefsFromRow(user),
+      }),
     );
   })
 
@@ -80,7 +100,37 @@ export const authRoutes = new Hono<AppEnv>()
   .get('/me', async (c) => {
     const user = await resolveSession(c);
     if (!user) return c.json({ user: null });
-    return c.json({ user: toMe(user) });
+    return c.json({ user: sessionToMe(user) });
+  })
+
+  .patch('/notify', requireAuth, async (c) => {
+    const prefs = await parseBody(c, notifyPrefsSchema);
+    const me = c.get('user');
+    await c.env.DB.prepare(
+      `UPDATE users SET
+          notify_messages = ?, notify_mentions = ?, notify_votes = ?,
+          notify_places = ?, notify_links = ?
+        WHERE id = ?`,
+    )
+      .bind(
+        prefs.messages ? 1 : 0,
+        prefs.mentions ? 1 : 0,
+        prefs.votes ? 1 : 0,
+        prefs.places ? 1 : 0,
+        prefs.links ? 1 : 0,
+        me.id,
+      )
+      .run();
+
+    return c.json(
+      toMe({
+        id: me.id,
+        name: me.name,
+        role: me.role,
+        hasPassword: me.hasPassword,
+        notify: prefs,
+      }),
+    );
   })
 
   .post('/password', requireAuth, async (c) => {
@@ -98,7 +148,7 @@ export const authRoutes = new Hono<AppEnv>()
         row?.passwordHash ?? null,
         row?.passwordSalt ?? null,
       );
-      if (!ok) throw new HTTPException(400, { message: 'Current password is wrong' });
+      if (!ok) throw new HTTPException(400, { message: 'Současné heslo nesedí' });
     }
 
     const { hash, salt } = await hashPassword(next);
@@ -106,5 +156,13 @@ export const authRoutes = new Hono<AppEnv>()
       .bind(hash, salt, me.id)
       .run();
 
-    return c.json(toMe({ ...me, hasPassword: true }));
+    return c.json(
+      toMe({
+        id: me.id,
+        name: me.name,
+        role: me.role,
+        hasPassword: true,
+        notify: me.notify ?? DEFAULT_NOTIFY,
+      }),
+    );
   });

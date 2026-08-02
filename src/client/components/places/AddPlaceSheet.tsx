@@ -36,7 +36,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
   });
 
   return (
-    <Sheet open={open} title="Add a place" onClose={onClose}>
+    <Sheet open={open} title="Přidat místo" onClose={onClose}>
       <form
         className="space-y-3"
         onSubmit={(e) => {
@@ -45,18 +45,21 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
         }}
       >
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Name</span>
+          <span className="mb-1 block text-sm font-medium">Název (volitelné)</span>
           <input
             className="field"
             maxLength={TITLE_MAX}
-            placeholder="Chalet Alpenrose"
+            placeholder="Chalet Alpenrose — jinak zkusíme načíst z odkazu"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
+          <span className="mt-1 block text-xs text-ink-soft">
+            Název a fotka z Bookingu/Airbnb se načtou automaticky, pokud to stránka dovolí.
+          </span>
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Link</span>
+          <span className="mb-1 block text-sm font-medium">Odkaz</span>
           <input
             className="field"
             type="url"
@@ -70,7 +73,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
 
         <div className="grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Total price (CZK)</span>
+            <span className="mb-1 block text-sm font-medium">Celková cena (Kč)</span>
             <input
               className="field"
               type="number"
@@ -85,7 +88,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-medium">Location</span>
+            <span className="mb-1 block text-sm font-medium">Lokalita</span>
             <input
               className="field"
               list="known-locations"
@@ -103,11 +106,11 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         <label className="block">
-          <span className="mb-1 block text-sm font-medium">Notes (optional)</span>
+          <span className="mb-1 block text-sm font-medium">Poznámka (volitelné)</span>
           <textarea
             className="min-h-20 field resize-y"
             maxLength={COMMENT_MAX}
-            placeholder="Dates, how many beds, distance to the lift…"
+            placeholder="Termíny, počet lůžek, vzdálenost k vleku…"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
@@ -115,7 +118,7 @@ export function AddPlaceSheet({ open, onClose }: { open: boolean; onClose: () =>
 
         <ErrorNote error={create.error} />
         <button className="btn-primary w-full" disabled={create.isPending}>
-          Add to shortlist
+          Přidat na seznam
         </button>
       </form>
     </Sheet>

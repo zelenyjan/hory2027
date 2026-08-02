@@ -10,13 +10,13 @@ import { PlaceCard } from '../components/places/PlaceCard';
 import { EmptyState, Spinner } from '../components/ui';
 
 const SORTS = {
-  score: { label: 'Top rated', compare: (a: Accommodation, b: Accommodation) => b.score - a.score },
+  score: { label: 'Nejlepší', compare: (a: Accommodation, b: Accommodation) => b.score - a.score },
   price: {
-    label: 'Cheapest',
+    label: 'Nejlevnější',
     compare: (a: Accommodation, b: Accommodation) => a.totalPriceCzk - b.totalPriceCzk,
   },
   newest: {
-    label: 'Newest',
+    label: 'Nejnovější',
     compare: (a: Accommodation, b: Accommodation) =>
       parseSqlDate(b.createdAt).getTime() - parseSqlDate(a.createdAt).getTime(),
   },
@@ -52,15 +52,15 @@ export function PlacesPage() {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="gradient-text text-xl font-bold tracking-tight">Places</h2>
+        <h2 className="gradient-text text-xl font-bold tracking-tight">Místa</h2>
         <button className="btn-primary py-2" onClick={() => setAdding(true)}>
-          Add place
+          Přidat místo
         </button>
       </div>
 
       <div className="mb-3 flex gap-1.5 overflow-x-auto pb-1">
         <button onClick={() => setParam('location')} className={location ? 'chip' : 'chip-active'}>
-          All ({total})
+          Vše ({total})
         </button>
         {locations.data?.map((entry) => (
           <button
@@ -96,8 +96,8 @@ export function PlacesPage() {
       )}
       {places.data?.length === 0 && (
         <EmptyState
-          title={location ? `Nothing in ${location} yet` : 'No places yet'}
-          hint="Paste a Booking or Airbnb link with the total price."
+          title={location ? `V ${location} zatím nic není` : 'Zatím žádná místa'}
+          hint="Vlož odkaz z Bookingu nebo Airbnb a celkovou cenu."
         />
       )}
 

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { Message, MessageRead } from '@shared/types';
 import { REACTION_EMOJIS } from '@shared/schemas';
-import { formatTime, splitLinks } from '../../lib/format';
+import { formatTime } from '../../lib/format';
 import { useSession } from '../../lib/session';
+import { MentionText } from '../MentionText';
 import { Avatar, Sheet } from '../ui';
 
 type Props = {
@@ -15,29 +16,6 @@ type Props = {
   onToggleReaction: (message: Message, emoji: string) => void;
   onJumpTo: (messageId: number) => void;
 };
-
-function Body({ text }: { text: string }) {
-  return (
-    <>
-      {splitLinks(text).map((part, i) =>
-        part.href ? (
-          <a
-            key={i}
-            href={part.href}
-            target="_blank"
-            rel="noreferrer noopener"
-            onClick={(e) => e.stopPropagation()}
-            className="underline underline-offset-2 hover:opacity-80"
-          >
-            {part.text}
-          </a>
-        ) : (
-          <span key={i}>{part.text}</span>
-        ),
-      )}
-    </>
-  );
-}
 
 export function MessageBubble({
   message,
@@ -108,26 +86,34 @@ export function MessageBubble({
             >
               <span className="block font-medium">{message.quoted.userName}</span>
               <span className="line-clamp-2 opacity-80">
-                {message.quoted.deleted ? 'message deleted' : message.quoted.body}
+                {message.quoted.deleted ? 'zpráva smazána' : message.quoted.body}
               </span>
             </span>
           )}
 
-          {message.deleted ? 'message deleted' : <Body text={message.body} />}
+          {message.deleted ? (
+            'zpráva smazána'
+          ) : (
+            <MentionText
+              text={message.body}
+              mentionNames={(message.mentions ?? []).map((m) => m.name)}
+              accent={mine ? 'on-brand' : 'brand'}
+            />
+          )}
 
           <span
             className={`ml-2 inline-block align-bottom text-[0.65rem] whitespace-nowrap ${
               mine ? 'text-white/70' : 'text-ink-soft'
             }`}
           >
-            {message.editedAt && 'edited · '}
+            {message.editedAt && 'upraveno · '}
             {formatTime(message.createdAt)}
             {showTicks && (
               <span
                 title={
                   readers.length === 0
-                    ? 'Nobody has read this yet'
-                    : `Read by ${readers.map((r) => r.name).join(', ')}`
+                    ? 'Zatím nikdo nepřečetl'
+                    : `Přečetli: ${readers.map((r) => r.name).join(', ')}`
                 }
                 className={`ml-1 tracking-tighter ${readByAll ? 'text-white' : 'text-white/60'}`}
               >
@@ -161,18 +147,20 @@ export function MessageBubble({
         )}
       </div>
 
-      <Sheet open={menuOpen} title="Message" onClose={() => setMenuOpen(false)}>
+      <Sheet open={menuOpen} title="Zpráva" onClose={() => setMenuOpen(false)}>
         {showTicks && (
           <div className="mb-5 rounded-xl border border-line/70 bg-surface p-3 text-sm">
             <p className="font-medium">
-              {readByAll ? '✓✓ Read by everyone' : `Read by ${readers.length} of ${others.length}`}
+              {readByAll
+                ? '✓✓ Přečetli všichni'
+                : `Přečetlo ${readers.length} z ${others.length}`}
             </p>
             {readers.length > 0 && !readByAll && (
               <p className="mt-1 text-ink-soft">{readers.map((r) => r.name).join(', ')}</p>
             )}
             {pending.length > 0 && (
               <p className="mt-1 text-ink-soft">
-                Waiting on {pending.map((r) => r.name).join(', ')}
+                Čeká se na {pending.map((r) => r.name).join(', ')}
               </p>
             )}
           </div>
@@ -191,21 +179,21 @@ export function MessageBubble({
         </div>
         <div className="space-y-2">
           <button className="btn-ghost w-full" onClick={act(() => onReply(message))}>
-            Reply
+            Odpovědět
           </button>
           {mine && (
             <button className="btn-ghost w-full" onClick={act(() => onEdit(message))}>
-              Edit
+              Upravit
             </button>
           )}
           {canDelete && (
             <button
               className="btn-ghost w-full text-bad"
               onClick={act(() => {
-                if (window.confirm('Delete this message?')) onDelete(message);
+                if (window.confirm('Smazat tuto zprávu?')) onDelete(message);
               })}
             >
-              Delete
+              Smazat
             </button>
           )}
         </div>

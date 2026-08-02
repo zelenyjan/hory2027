@@ -13,6 +13,7 @@
     "seed": "node scripts/seed.mjs",
     "uicheck": "node scripts/uicheck.mjs",
     "icons": "node scripts/icons.mjs",
+    "about-shots": "node scripts/about-shots.mjs",
     "vapid": "node scripts/vapid.mjs",
     "db:migrate:local": "wrangler d1 migrations apply hory2027 --local",
     "db:reset:local": "rm -rf .wrangler/state/v3/d1 && pnpm db:migrate:local",

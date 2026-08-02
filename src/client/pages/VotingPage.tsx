@@ -47,23 +47,23 @@ function PollCard({ poll }: { poll: Poll }) {
           <h3 className="font-semibold wrap-anywhere">{poll.question}</h3>
           <p className="mt-0.5 text-xs text-ink-soft">
             {poll.creatorName} · {formatRelative(poll.createdAt)}
-            {poll.multiChoice && ' · multiple choice'}
-            {closed && ' · closed'}
+            {poll.multiChoice && ' · více možností'}
+            {closed && ' · uzavřeno'}
           </p>
         </div>
         {canManage && (
           <div className="flex shrink-0 gap-1">
             {!closed && (
               <ConfirmButton
-                label="Close"
-                confirmLabel="Close this poll? Voting stops, results stay visible."
+                label="Uzavřít"
+                confirmLabel="Uzavřít anketu? Hlasování skončí, výsledky zůstanou."
                 onConfirm={() => close.mutate()}
                 pending={close.isPending}
               />
             )}
             <ConfirmButton
-              label="Delete"
-              confirmLabel="Delete this poll and all its votes?"
+              label="Smazat"
+              confirmLabel="Smazat anketu včetně všech hlasů?"
               onConfirm={() => remove.mutate()}
               pending={remove.isPending}
               className="btn-ghost px-3 py-1.5 text-xs text-bad"
@@ -112,16 +112,17 @@ function PollCard({ poll }: { poll: Poll }) {
 
       <footer className="mt-3 flex items-center justify-between text-xs text-ink-soft">
         <span>
-          {totalVotes} {totalVotes === 1 ? 'vote' : 'votes'}
+          {totalVotes}{' '}
+          {totalVotes === 1 ? 'hlas' : totalVotes >= 2 && totalVotes <= 4 ? 'hlasy' : 'hlasů'}
         </span>
         {totalVotes > 0 && (
           <button className="underline underline-offset-2" onClick={() => setShowVoters(true)}>
-            Who voted?
+            Kdo hlasoval?
           </button>
         )}
       </footer>
 
-      <Sheet open={showVoters} title="Who voted" onClose={() => setShowVoters(false)}>
+      <Sheet open={showVoters} title="Kdo hlasoval" onClose={() => setShowVoters(false)}>
         <ul className="space-y-4">
           {poll.options.map((option) => (
             <li key={option.id}>
@@ -129,7 +130,7 @@ function PollCard({ poll }: { poll: Poll }) {
               <p className="text-sm text-ink-soft">
                 {option.voters.length > 0
                   ? option.voters.map((v) => v.name).join(', ')
-                  : 'nobody yet'}
+                  : 'zatím nikdo'}
               </p>
             </li>
           ))}
@@ -160,7 +161,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
   const filled = options.filter((o) => o.trim()).length;
 
   return (
-    <Sheet open={open} title="New poll" onClose={onClose}>
+    <Sheet open={open} title="Nová anketa" onClose={onClose}>
       <form
         className="space-y-3"
         onSubmit={(e) => {
@@ -170,7 +171,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
       >
         <input
           className="field"
-          placeholder="What are we deciding?"
+          placeholder="O čem rozhodujeme?"
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           required
@@ -179,7 +180,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
           <div key={index} className="flex gap-2">
             <input
               className="field"
-              placeholder={`Option ${index + 1}`}
+              placeholder={`Možnost ${index + 1}`}
               value={option}
               onChange={(e) =>
                 setOptions(options.map((o, i) => (i === index ? e.target.value : o)))
@@ -202,7 +203,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
             className="btn-ghost w-full"
             onClick={() => setOptions([...options, ''])}
           >
-            Add option
+            Přidat možnost
           </button>
         )}
 
@@ -213,7 +214,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
             checked={multiChoice}
             onChange={(e) => setMultiChoice(e.target.checked)}
           />
-          Allow picking several options
+          Povolit výběr více možností
         </label>
 
         <ErrorNote error={create.error} />
@@ -221,7 +222,7 @@ function CreatePollSheet({ open, onClose }: { open: boolean; onClose: () => void
           className="btn-primary w-full"
           disabled={create.isPending || !question.trim() || filled < 2}
         >
-          Create poll
+          Vytvořit anketu
         </button>
       </form>
     </Sheet>
@@ -235,9 +236,9 @@ export function VotingPage() {
   return (
     <div className="h-full overflow-y-auto p-4">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="gradient-text text-xl font-bold tracking-tight">Voting</h2>
+        <h2 className="gradient-text text-xl font-bold tracking-tight">Hlasování</h2>
         <button className="btn-primary py-2" onClick={() => setCreating(true)}>
-          New poll
+          Nová anketa
         </button>
       </div>
 
@@ -247,7 +248,7 @@ export function VotingPage() {
         </div>
       )}
       {polls.data?.length === 0 && (
-        <EmptyState title="No polls yet" hint="Start one to settle a date, a resort, or dinner." />
+        <EmptyState title="Zatím žádné ankety" hint="Založ jednu třeba kvůli termínu, středisku nebo večeři." />
       )}
 
       <div className="space-y-3">

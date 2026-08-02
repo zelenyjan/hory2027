@@ -18,10 +18,10 @@ export function SetPasswordGate() {
   return (
     <div className="flex h-full items-center justify-center p-6">
       <div className="w-full max-w-sm card p-7">
-        <h1 className="gradient-text text-2xl font-bold tracking-tight">Choose your password</h1>
+        <h1 className="gradient-text text-2xl font-bold tracking-tight">Zvol si heslo</h1>
         <p className="mt-1 text-sm text-ink-soft">
-          You signed in with the bootstrap password. Set a real one to finish setting up the admin
-          account — the bootstrap password stops working afterwards.
+          Přihlásil ses bootstrap heslem. Nastav si vlastní heslo — tím dokončíš založení admin
+          účtu a bootstrap heslo přestane fungovat.
         </p>
 
         <form
@@ -35,7 +35,7 @@ export function SetPasswordGate() {
             className="field"
             type="password"
             autoComplete="new-password"
-            placeholder={`New password (min ${PASSWORD_MIN} characters)`}
+            placeholder={`Nové heslo (min. ${PASSWORD_MIN} znaky)`}
             minLength={PASSWORD_MIN}
             value={next}
             onChange={(e) => setNext(e.target.value)}
@@ -43,7 +43,7 @@ export function SetPasswordGate() {
           />
           <ErrorNote error={save.error} />
           <button className="btn-primary w-full" disabled={save.isPending}>
-            Save and continue
+            Uložit a pokračovat
           </button>
         </form>
       </div>

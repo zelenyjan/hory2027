@@ -20,8 +20,11 @@ export type TripEvent =
   | { type: 'poll.deleted'; payload: { pollId: number } }
   | { type: 'poll.voted'; payload: { pollId: number } }
   | { type: 'accommodation.created'; payload: { id: number } }
+  | { type: 'accommodation.updated'; payload: { id: number } }
   | { type: 'accommodation.deleted'; payload: { id: number } }
   | { type: 'accommodation.rated'; payload: { id: number } }
   | { type: 'comment.created'; payload: { accommodationId: number } }
   | { type: 'comment.deleted'; payload: { accommodationId: number } }
+  | { type: 'pin.created'; payload: { id: number } }
+  | { type: 'pin.deleted'; payload: { id: number } }
   | { type: 'presence'; payload: { online: number } };

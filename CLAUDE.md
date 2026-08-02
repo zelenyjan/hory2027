@@ -89,7 +89,7 @@ When the admin creates a user with a display name, the server generates a 32-byt
 
 ### 4.3 Optional password
 
-Any member can set a password in their profile (min. 10 chars). After that, they can also log in with name + password on `/login`. The invite link keeps working unless the user or admin disables it. Password hashing uses PBKDF2-SHA256 (WebCrypto, 100k iterations — the maximum Workers allows — per-user salt) — the pragmatic standard on Workers, where bcrypt/argon2 aren't natively available.
+Any member can set a password in their profile (min. 4 chars). After that, they can also log in with name + password on `/login`. The invite link keeps working unless the user or admin disables it. Password hashing uses PBKDF2-SHA256 (WebCrypto, 100k iterations — the maximum Workers allows — per-user salt) — the pragmatic standard on Workers, where bcrypt/argon2 aren't natively available.
 
 ### 4.4 Sessions
 
